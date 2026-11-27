@@ -643,12 +643,13 @@
       const body = document.getElementById('ticketsBody');
       document.getElementById('ticketCount').textContent = `${state.tickets.length} ticket${state.tickets.length === 1 ? '' : 's'}`;
       document.getElementById('emptyState').hidden = state.tickets.length > 0;
-      document.getElementById('selectAll').checked = state.selected.size > 0 && state.selected.size === state.tickets.length;
+      const eligibleCount = state.tickets.filter((ticket) => ticket.eligible).length;
+      document.getElementById('selectAll').checked = eligibleCount > 0 && state.selected.size === eligibleCount;
 
       body.innerHTML = state.tickets.map((ticket) => {
         const selected = state.selected.has(ticket.id);
         return `<tr class="${selected ? 'bg-gold/10' : ''}">
-          <td class="px-3 py-2.5"><input type="checkbox" class="row-check h-4 w-4 accent-[#161411]" data-id="${esc(ticket.id)}" ${selected ? 'checked' : ''} /></td>
+          <td class="px-3 py-2.5"><input type="checkbox" class="row-check h-4 w-4 accent-[#161411]" data-id="${esc(ticket.id)}" ${selected ? 'checked' : ''} ${ticket.eligible ? '' : 'disabled title="غير مؤهل · Not eligible"'} /></td>
           <td class="px-3 py-2.5 font-display text-[11px] ltr">${esc(ticket.id)}</td>
           <td class="px-3 py-2.5 font-semibold">${esc(ticket.name || '—')}</td>
           <td class="px-3 py-2.5 ltr text-[11px] text-ink/60" dir="ltr">${esc(ticket.email || '—')}</td>
@@ -658,8 +659,8 @@
           <td class="px-3 py-2.5">${badge(ticket.passStatus, PASS_BADGES)}${ticket.eligible ? '' : '<span class="mr-1 text-[9px] text-ink/35">غير مؤهل</span>'}</td>
           <td class="px-3 py-2.5">
             <div class="flex gap-1">
-              <button class="preview-btn tkt-btn tkt-btn-ghost py-1 px-2 text-[10px]" data-id="${esc(ticket.id)}">معاينة</button>
-              <button class="resend-btn tkt-btn tkt-btn-ink py-1 px-2 text-[10px]" data-id="${esc(ticket.id)}" ${ticket.eligible ? '' : 'disabled'}>إرسال</button>
+              <button class="preview-btn tkt-btn tkt-btn-ghost py-1 px-2 text-[10px]" data-id="${esc(ticket.id)}" ${ticket.eligible ? '' : 'disabled title="وافق على الحجز وأكّد الدفع قبل المعاينة · Approve and confirm payment first"'}>معاينة</button>
+              <button class="resend-btn tkt-btn tkt-btn-ink py-1 px-2 text-[10px]" data-id="${esc(ticket.id)}" ${ticket.eligible ? '' : 'disabled title="وافق على الحجز وأكّد الدفع قبل الإرسال · Approve and confirm payment first"'}>إرسال</button>
             </div>
           </td>
         </tr>`;
@@ -682,7 +683,9 @@
         const data = await api('/api/admin/preview', { method: 'POST', body: { ticketId } });
         window.open(data.url, '_blank', 'noopener');
       } catch (error) {
-        toast(error.message, 'error');
+        toast(error.status === 409
+          ? 'هذا الحجز غير مؤهل بعد — وافق عليه وأكّد الدفع أولاً · Approve and confirm payment first'
+          : error.message, 'error');
       }
     }
 
@@ -829,7 +832,7 @@
     });
 
     document.getElementById('selectAll').addEventListener('change', (event) => {
-      state.selected = new Set(event.target.checked ? state.tickets.map((ticket) => ticket.id) : []);
+      state.selected = new Set(event.target.checked ? state.tickets.filter((ticket) => ticket.eligible).map((ticket) => ticket.id) : []);
       renderTickets();
     });
     document.getElementById('clearSelectionBtn').addEventListener('click', () => {
