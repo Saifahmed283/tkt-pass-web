@@ -304,7 +304,7 @@
           </div>
 
           <!-- Field 3: SEAT / BUS -->
-          <div class="">
+          <div class="" data-bus-only>
             <p class="text-[11px] font-medium tracking-[0.06em] uppercase text-[#7A7469]">
               SEAT / <span class="font-arabic text-[12px]">المقعد</span>
             </p>
@@ -458,100 +458,18 @@
           بيانات التذكرة ثابتة من المنظّم. يمكنك تغيير لون التذكرة فقط.
         </p>
 
-        <label class="block text-xs font-medium text-[#5C564C] mb-2 font-arabic">ستايل جاهز</label>
-        <div id="themeSwatches" class="grid grid-cols-5 gap-2 mb-4">
-          <button
-            type="button"
-            data-theme="royal-gold"
-            class="theme-swatch flex flex-col items-center gap-1 p-1.5 rounded-xl border-2 border-[#161411] bg-white cursor-pointer"
-          >
-            <span class="w-7 h-7 rounded-full shadow-inner border border-black/10" style="background: linear-gradient(135deg, #161411 55%, #D4B475 55%);"></span>
-            <span class="text-[10px] font-bold text-[#161411] font-arabic">ملكي</span>
+        <label class="block text-xs font-medium text-[#5C564C] mb-2 font-arabic">اختار لون التذكرة</label>
+        <div id="themeSwatches" class="grid grid-cols-3 gap-3 mb-4">
+          <button type="button" data-theme="classic-black" class="theme-swatch flex flex-col items-center gap-2 p-2 rounded-xl border-2 border-[#161411] bg-white">
+            <span class="w-10 h-10 rounded-full border border-black/10" style="background:#171717"></span><span class="text-[11px] font-bold font-arabic">أسود</span>
           </button>
-
-          <button
-            type="button"
-            data-theme="rose-blush"
-            class="theme-swatch flex flex-col items-center gap-1 p-1.5 rounded-xl border border-[#D4CBB8] bg-white/70 hover:bg-white cursor-pointer"
-          >
-            <span class="w-7 h-7 rounded-full shadow-inner border border-black/10" style="background: linear-gradient(135deg, #2D1824 55%, #F2A7C3 55%);"></span>
-            <span class="text-[10px] font-bold text-[#2D1824] font-arabic">روز بينك</span>
+          <button type="button" data-theme="tkt-pink" class="theme-swatch flex flex-col items-center gap-2 p-2 rounded-xl border border-[#D4CBB8] bg-white">
+            <span class="w-10 h-10 rounded-full border border-black/10" style="background:#F20A91"></span><span class="text-[11px] font-bold font-arabic">وردي</span>
           </button>
-
-          <button
-            type="button"
-            data-theme="lilac-dream"
-            class="theme-swatch flex flex-col items-center gap-1 p-1.5 rounded-xl border border-[#D4CBB8] bg-white/70 hover:bg-white cursor-pointer"
-          >
-            <span class="w-7 h-7 rounded-full shadow-inner border border-black/10" style="background: linear-gradient(135deg, #211936 55%, #C8B2FF 55%);"></span>
-            <span class="text-[10px] font-bold text-[#211936] font-arabic">لافندر</span>
-          </button>
-
-          <button
-            type="button"
-            data-theme="emerald-wild"
-            class="theme-swatch flex flex-col items-center gap-1 p-1.5 rounded-xl border border-[#D4CBB8] bg-white/70 hover:bg-white cursor-pointer"
-          >
-            <span class="w-7 h-7 rounded-full shadow-inner border border-black/10" style="background: linear-gradient(135deg, #10261F 55%, #6EE7B7 55%);"></span>
-            <span class="text-[10px] font-bold text-[#10261F] font-arabic">أخضر دجلة</span>
-          </button>
-
-          <button
-            type="button"
-            data-theme="midnight-sky"
-            class="theme-swatch flex flex-col items-center gap-1 p-1.5 rounded-xl border border-[#D4CBB8] bg-white/70 hover:bg-white cursor-pointer"
-          >
-            <span class="w-7 h-7 rounded-full shadow-inner border border-black/10" style="background: linear-gradient(135deg, #0F1E33 55%, #7DD3FC 55%);"></span>
-            <span class="text-[10px] font-bold text-[#0F1E33] font-arabic">أزرق ليلي</span>
+          <button type="button" data-theme="sand-gold" class="theme-swatch flex flex-col items-center gap-2 p-2 rounded-xl border border-[#D4CBB8] bg-white">
+            <span class="w-10 h-10 rounded-full border border-black/10" style="background:#C9A45B"></span><span class="text-[11px] font-bold font-arabic">ذهبي</span>
           </button>
         </div>
-
-        <section class="mb-4" aria-labelledby="graphicPickerLabel">
-          <label id="graphicPickerLabel" class="block text-xs font-medium text-[#5C564C] mb-2 font-arabic">الرسومات والزخارف</label>
-          <div id="graphicSwatches" class="grid grid-cols-3 gap-2">
-            <button type="button" data-graphic="none" aria-pressed="true" class="graphic-swatch rounded-xl border-2 border-[#161411] bg-white p-2 text-center"><span class="mx-auto mb-1 block h-8 rounded-lg border border-[#E5DED0] bg-[#F7F5F0]"></span><span class="text-[10px] font-semibold text-[#39342D] font-arabic">بدون</span></button>
-            <button type="button" data-graphic="topographic" aria-pressed="false" class="graphic-swatch rounded-xl border border-[#D4CBB8] bg-white p-2 text-center"><span class="graphic-preview graphic-preview--topographic mx-auto mb-1 block h-8 rounded-lg"></span><span class="text-[10px] font-semibold text-[#39342D] font-arabic">طبوغرافي</span></button>
-            <button type="button" data-graphic="contours" aria-pressed="false" class="graphic-swatch rounded-xl border border-[#D4CBB8] bg-white p-2 text-center"><span class="graphic-preview graphic-preview--contours mx-auto mb-1 block h-8 rounded-lg"></span><span class="text-[10px] font-semibold text-[#39342D] font-arabic">خطوط انسيابية</span></button>
-            <button type="button" data-graphic="grid" aria-pressed="false" class="graphic-swatch rounded-xl border border-[#D4CBB8] bg-white p-2 text-center"><span class="graphic-preview graphic-preview--grid mx-auto mb-1 block h-8 rounded-lg"></span><span class="text-[10px] font-semibold text-[#39342D] font-arabic">شبكة هندسية</span></button>
-            <button type="button" data-graphic="orbit" aria-pressed="false" class="graphic-swatch rounded-xl border border-[#D4CBB8] bg-white p-2 text-center"><span class="graphic-preview graphic-preview--orbit mx-auto mb-1 block h-8 rounded-lg"></span><span class="text-[10px] font-semibold text-[#39342D] font-arabic">مدارات</span></button>
-            <button type="button" data-graphic="diagonal" aria-pressed="false" class="graphic-swatch rounded-xl border border-[#D4CBB8] bg-white p-2 text-center"><span class="graphic-preview graphic-preview--diagonal mx-auto mb-1 block h-8 rounded-lg"></span><span class="text-[10px] font-semibold text-[#39342D] font-arabic">زوايا</span></button>
-          </div>
-          <p class="mt-2 text-[10px] leading-relaxed text-[#8A8173] font-arabic">اختار زخرفة خفيفة تظهر على خلفية التذكرة وتحافظ على وضوح البيانات.</p>
-        </section>
-
-        <div class="grid grid-cols-2 gap-2.5 mb-4">
-          <div>
-            <label for="colorHeader" class="block text-xs font-medium text-[#5C564C] mb-1 font-arabic">لون رأس التذكرة</label>
-            <input
-              id="colorHeader"
-              type="color"
-              value="#161411"
-              class="w-full h-10 rounded-xl border border-[#D4CBB8] bg-white p-1 cursor-pointer"
-            />
-          </div>
-          <div>
-            <label for="colorAccent" class="block text-xs font-medium text-[#5C564C] mb-1 font-arabic">لون التمييز</label>
-            <input
-              id="colorAccent"
-              type="color"
-              value="#D4B475"
-              class="w-full h-10 rounded-xl border border-[#D4CBB8] bg-white p-1 cursor-pointer"
-            />
-          </div>
-        </div>
-
-        <div class="mb-4">
-          <label for="inputKeepsake" class="block text-xs font-medium text-[#5C564C] mb-1 font-arabic">جملة ذكرى على التذكرة</label>
-          <input
-            id="inputKeepsake"
-            type="text"
-            value="أحلى لمة ومغامرة في وادي دجلة ✨"
-            placeholder="اكتب جملة حلوة تفضل ذكرى..."
-            maxlength="90"
-            class="w-full rounded-xl border border-[#D4CBB8] bg-white px-3 py-2 text-sm text-[#161411] font-arabic focus:outline-none focus:border-[#9E7B3B]"
-          />
-        </div>
-
         <button
           id="doneEditBtn"
           type="button"
