@@ -304,23 +304,18 @@ function renderDesign() {
     el.inputKeepsake.value = design.quote || '';
   }
   const graphic = design.graphic || 'none';
-  const graphicStyles = {
-    topographic: { target: el.passHeader, pattern: 'radial-gradient(ellipse at 35% 55%, transparent 0 35px, color-mix(in srgb, var(--pass-accent) 35%, transparent) 36px 37px, transparent 38px 48px)', size: '100% 100%' },
-    contours: { target: el.passBody, pattern: 'repeating-radial-gradient(ellipse at 75% 40%, transparent 0 13px, color-mix(in srgb, var(--pass-accent) 27%, transparent) 14px 15px, transparent 16px 24px)', size: '220px 180px' },
-    grid: { target: el.passBody, pattern: 'linear-gradient(color-mix(in srgb, var(--pass-accent) 18%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--pass-accent) 18%, transparent) 1px, transparent 1px)', size: '18px 18px' },
-    orbit: { target: el.passHeader, pattern: 'repeating-radial-gradient(ellipse at 88% 52%, transparent 0 18px, color-mix(in srgb, var(--pass-accent) 30%, transparent) 19px 20px, transparent 21px 31px)', size: '260px 220px' },
-    diagonal: { target: el.passBody, pattern: 'repeating-linear-gradient(135deg, transparent 0 13px, color-mix(in srgb, var(--pass-accent) 24%, transparent) 14px 15px, transparent 16px 27px)', size: '180px 180px' },
+  const patterns = {
+    topographic: `<svg xmlns="http://www.w3.org/2000/svg" width="260" height="180" viewBox="0 0 260 180"><g fill="none" stroke="%23D4B475" stroke-width="1.4" opacity=".30"><path d="M-20 42C35-8 78 2 108 36s72 47 172-8M-20 58C35 8 78 18 108 52s72 47 172-8M-20 74C35 24 78 34 108 68s72 47 172-8M-20 90C35 40 78 50 108 84s72 47 172-8M-20 106C35 56 78 66 108 100s72 47 172-8M-20 122C35 72 78 82 108 116s72 47 172-8"/></g></svg>`,
+    contours: `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="180" viewBox="0 0 220 180"><g fill="none" stroke="%23D4B475" stroke-width="1.5" opacity=".27"><path d="M-20 90C10 15 70 10 110 45s80 45 130-10M-20 100C10 25 70 20 110 55s80 45 130-10M-20 110C10 35 70 30 110 65s80 45 130-10M-20 120C10 45 70 40 110 75s80 45 130-10M-20 130C10 55 70 50 110 85s80 45 130-10"/></g></svg>`,
+    grid: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><g fill="none" stroke="%23D4B475" stroke-width="1" opacity=".22"><path d="M0 0H48V48H0zM24 0V48M0 24H48"/></g></svg>`,
+    orbit: `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="180" viewBox="0 0 220 180"><g fill="none" stroke="%23D4B475" stroke-width="1.5" opacity=".28"><ellipse cx="110" cy="90" rx="95" ry="38"/><ellipse cx="110" cy="90" rx="72" ry="58" transform="rotate(-28 110 90)"/><ellipse cx="110" cy="90" rx="42" ry="82" transform="rotate(34 110 90)"/></g></svg>`,
+    diagonal: `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44"><g fill="none" stroke="%23D4B475" stroke-width="1.4" opacity=".24"><path d="M-10 44L44-10M0 54L54 0M-20 34L34-20M10 64L64 10"/></g></svg>`,
   };
-  [el.passHeader, el.passBody].forEach((node) => {
-    if (node) { node.style.backgroundImage = ''; node.style.backgroundPosition = ''; node.style.backgroundSize = ''; }
-  });
-  const selectedGraphic = graphicStyles[graphic];
-  if (selectedGraphic?.target) {
-    selectedGraphic.target.style.backgroundImage = selectedGraphic.pattern;
-    selectedGraphic.target.style.backgroundPosition = 'right center';
-    selectedGraphic.target.style.backgroundSize = selectedGraphic.size;
-    selectedGraphic.target.style.backgroundRepeat = 'no-repeat';
-  }
+  const svg = patterns[graphic];
+  const accentHex = palette.accent.slice(1).toUpperCase();
+  const image = svg ? `url("data:image/svg+xml,${svg.replaceAll('%23D4B475', '%23' + accentHex)}")` : 'none';
+  if (el.passHeader) el.passHeader.style.backgroundImage = image;
+  if (el.passBody) el.passBody.style.backgroundImage = image;
   if (el.graphicSwatches) {
     el.graphicSwatches.querySelectorAll('.graphic-swatch').forEach((button) => {
       const selected = button.dataset.graphic === graphic;
