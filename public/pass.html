@@ -648,7 +648,8 @@
         location: 'Wadi Degla Protectorate · المعادي',
         seat: 'Bus 01 · Seat A4',
         keepsake: 'أحلى لمة ومغامرة في وادي دجلة ✨',
-        id: 'TKT-26001'
+        id: 'TKT-26001',
+        scanCode: ''
       };
 
       // Identity is NEVER read from query params. It comes only from the signed API response.
@@ -702,6 +703,7 @@
       function applyTicketData(data) {
         const t = data.ticket || {};
         state.id = t.id || state.id;
+        state.scanCode = t.scanCode || '';
         state.name = t.name || 'Guest';
         state.seat = t.seat || 'General Admission';
         state.event = t.eventTitle || state.event;
@@ -825,9 +827,10 @@
 
       function renderQRCodes() {
         const cleanId = (state.id || 'TKT-26001').trim();
-        const cleanName = (state.name || 'Guest').trim();
-        const cleanSeat = (state.seat || 'GA').trim();
-        const qrPayload = `TKT|${cleanId}|${cleanName}|${cleanSeat}`;
+        const scanCode = (state.scanCode || '').trim();
+        // Gate scanners validate signed credential codes (or short codes). The
+        // reservation code stays visible on the pass but is never used for entry.
+        const qrPayload = scanCode || `TKT|${cleanId}|TKT|GA`;
 
         qrContainer.innerHTML = buildQrSvg(qrPayload, 112);
         const smallSvg = qrContainer.querySelector('svg');
