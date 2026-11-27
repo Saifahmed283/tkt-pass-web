@@ -240,46 +240,31 @@
 
         <!-- TOP HEADER SECTION -->
         <header id="passHeader" class="relative bg-[var(--pass-header)] text-white px-7 pt-7 pb-6 overflow-hidden transition-colors duration-300">
-          <!-- Exact TKT Seal Watermark on Right Edge (Deep Background Parallax Layer) -->
-          <svg
-            id="tktWatermarkSvg"
-            class="pointer-events-none select-none absolute -right-2 top-1/2 h-[220px] w-[114px] opacity-[0.22]"
-            viewBox="0 0 114 220"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <!-- Outer Dotted Ring (Generated with exact polar coordinates around center 114, 110) -->
-            <g id="tktSealDots" style="fill: var(--pass-accent)"></g>
-
-            <!-- Double Concentric Rings -->
-            <circle cx="114" cy="110" r="88" style="stroke: var(--pass-accent)" stroke-width="2.6" />
-            <circle cx="114" cy="110" r="81" style="stroke: var(--pass-accent)" stroke-width="1.4" />
-
-            <!-- Inner TKT Emblem: Right Vertical Spine + Rounded Top/Bottom Bars + Left-Pointing K Arms -->
-            <g style="stroke: var(--pass-accent)" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round">
-              <!-- Vertical Spine on Right Edge -->
-              <line x1="109" y1="62" x2="109" y2="158" stroke-linecap="butt" />
-              <!-- Top Horizontal Bar -->
-              <line x1="74" y1="66.75" x2="109" y2="66.75" />
-              <!-- Bottom Horizontal Bar -->
-              <line x1="74" y1="153.25" x2="109" y2="153.25" />
-              <!-- Upper K Diagonal Arm -->
-              <line x1="74" y1="86" x2="105" y2="110" />
-              <!-- Lower K Diagonal Arm -->
-              <line x1="74" y1="134" x2="105" y2="110" />
+          <!-- World map watermark -->
+          <svg id="tktWatermarkSvg" class="pointer-events-none select-none absolute right-2 top-0 h-full w-[82%] opacity-[0.22]" viewBox="0 0 520 210" fill="none" aria-hidden="true">
+            <g fill="var(--pass-accent)" opacity=".72">
+              <path d="M34 48 55 31 83 26 101 35 120 30 137 43 132 58 113 65 105 81 84 88 72 108 57 104 49 84 34 76Z"/>
+              <path d="m113 111 17 7 14 24-4 29-13 27-13-12-7-31-10-20Z"/>
+              <path d="m208 39 20-13 31 4 18 13 35-3 20 16-10 18-27 2-11 18-24 4-17 21-16-7-9-26-19-14Z"/>
+              <path d="m254 102 22-5 22 13 11 27-8 32-19 25-18-13-5-31-18-21Z"/>
+              <path d="m345 43 23-17 43 2 34 17 29 3 17 18-15 16-34-4-17 14-27-7-18 13-20-10-5-21-23-7Z"/>
+              <path d="m405 111 21 5 14 19-7 25-19 14-15-18Z"/>
+            </g>
+            <g fill="none" stroke="var(--pass-accent)" stroke-width="1.2" opacity=".55">
+              <path d="M18 105C120 10 230 10 330 85s140 74 180 8"/>
+              <path d="M12 120C120 25 230 25 330 100s140 74 180 8"/>
             </g>
           </svg>
 
           <!-- Top Row: TKT Brand + EVENT PASS Badge -->
-          <div class="relative z-10 flex items-center justify-between mb-9">
+          <div class="relative z-10 flex items-center justify-between mb-5">
             <span class="text-[28px] font-extrabold tracking-tight leading-none text-white">TKT</span>
             <span class="text-[11px] font-bold tracking-[0.14em] uppercase shiny-gold-text">EVENT PASS</span>
           </div>
 
           <!-- Event Title & Subtitle -->
           <div class="relative z-10">
-            <h1 id="displayEventTitle" class="text-[24px] sm:text-[26px] font-bold leading-[1.2] tracking-tight text-white">
+            <h1 id="displayEventTitle" class="text-[20px] sm:text-[22px] font-bold leading-[1.2] tracking-tight text-white">
               Wadi Degla Escape
             </h1>
             <p id="displayEventSubtitle" class="mt-1.5 text-[15px] font-medium text-[var(--pass-accent)] font-arabic transition-colors duration-300">
@@ -288,16 +273,16 @@
           </div>
 
           <!-- Thin Accent Divider Line -->
-          <div class="relative z-10 my-5 h-[1px] w-full" style="background: linear-gradient(90deg, var(--pass-accent), transparent);"></div>
+          <div class="relative z-10 my-3 h-[1px] w-full" style="background: linear-gradient(90deg, var(--pass-accent), transparent);"></div>
 
           <!-- Day · Time Row -->
-          <div class="relative z-10 flex items-center justify-between text-[13.5px] font-normal text-white/95">
+          <div class="relative z-10 flex items-center justify-between text-[10px] font-normal text-white/95">
             <span id="displayDateTime">Friday, 4 December at 08:34 PM</span>
           </div>
         </header>
 
         <!-- MIDDLE CREAM BODY -->
-        <section id="passBody" class="bg-[var(--pass-body)] px-7 pt-7 pb-7 space-y-5 transition-colors duration-300">
+        <section id="passBody" class="bg-[var(--pass-body)] px-6 pt-5 pb-5 space-y-4 transition-colors duration-300">
           <!-- Field 1: PASS HOLDER -->
           <div class="">
             <p class="text-[11px] font-medium tracking-[0.06em] uppercase text-[#7A7469]">
@@ -328,19 +313,11 @@
             </p>
           </div>
 
-          <!-- Optional Keepsake / Memory Quote -->
-          <div id="keepsakeWrapper" class="pt-1 border-t border-black/5">
-            <p class="text-[10px] font-medium tracking-[0.06em] uppercase text-[#7A7469]">
-              MEMORY NOTE / <span class="font-arabic text-[11px]">ذكرى الرحلة</span>
-            </p>
-            <p id="displayKeepsake" class="mt-0.5 text-[13.5px] font-semibold text-[#3C3730] font-arabic leading-relaxed">
-              أحلى لمة ومغامرة في وادي دجلة ✨
-            </p>
-          </div>
+
         </section>
 
         <!-- Subtle front-side flip affordance -->
-        <div class="no-print px-7 pb-6">
+        <div class="no-print px-6 pb-4">
           <button
             id="flipFrontBtn"
             type="button"
@@ -478,7 +455,7 @@
           </button>
         </div>
         <p class="mb-4 text-[10px] leading-relaxed text-[#7A7469] font-arabic">
-          الاسم والمقعد ورقم التذكرة ثابتة من المنظّم. غيّر الألوان واكتب جملة ذكرى فقط.
+          بيانات التذكرة ثابتة من المنظّم. يمكنك تغيير لون التذكرة فقط.
         </p>
 
         <label class="block text-xs font-medium text-[#5C564C] mb-2 font-arabic">ستايل جاهز</label>

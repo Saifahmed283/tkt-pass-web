@@ -17,6 +17,28 @@ const QR_LIB = '/assets/qrcode.min.js';
 const HTML2CANVAS_LIB = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
 
 const THEMES = {
+  'classic-black': { header: '#171717', accent: '#D2B36B', accentDark: '#8C6D32', accentLight: '#F5E8C9', body: '#F8F7F3', footer: '#EEECE5' },
+  'tkt-pink': { header: '#F20A91', accent: '#FFFFFF', accentDark: '#B80068', accentLight: '#FFE1F1', body: '#F8F7F3', footer: '#EEECE5' },
+  'sand-gold': { header: '#C9A45B', accent: '#171717', accentDark: '#8A682D', accentLight: '#F5E8C9', body: '#F8F7F3', footer: '#EEECE5' },
+}; Guest pass: central state, action lifecycle, request coalescing, lazy exports.
+import {
+  bindAction,
+  createStore,
+  debounce,
+  delegateAction,
+  downloadBlob,
+  fetchJson,
+  loadScript,
+  nextFrame,
+  setDialog,
+  setElementStatus,
+  syncModalScroll,
+} from './tkt-runtime.js';
+
+const QR_LIB = '/assets/qrcode.min.js';
+const HTML2CANVAS_LIB = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+
+const THEMES = {
   'royal-gold': { header: '#161411', accent: '#D4B475', accentDark: '#9E7B3B', accentLight: '#FFF2CC', body: '#F7F5F0', footer: '#EFECE4' },
   'rose-blush': { header: '#2D1824', accent: '#F4A9C7', accentDark: '#B84A78', accentLight: '#FFE4F0', body: '#FDF7FA', footer: '#F7EBF1' },
   'lilac-dream': { header: '#211936', accent: '#C8B2FF', accentDark: '#6D4AC4', accentLight: '#EFE8FF', body: '#F8F6FC', footer: '#EFEBF7' },
@@ -88,7 +110,7 @@ const isFilePreview = window.location.protocol === 'file:' && !ticketToken;
 const store = createStore({
   load: { status: 'loading', code: null },
   data: { ...PREVIEW },
-  design: { theme: 'royal-gold', custom: null, quote: 'أحلى لمة ومغامرة في وادي دجلة ✨' },
+  design: { theme: 'classic-black', custom: null, quote: 'أحلى لمة ومغامرة في وادي دجلة ✨' },
   save: { status: 'idle' },
   ui: {
     flipped: false,
@@ -122,7 +144,7 @@ function mixColors(hexA, hexB, weightOfB) {
 }
 
 function getPalette(themeKey, custom) {
-  const base = THEMES[themeKey] || THEMES['royal-gold'];
+  const base = THEMES[themeKey] || THEMES['classic-black'];
   if (!custom) return base;
   const header = normalizeHex(custom.header, base.header);
   const accent = normalizeHex(custom.accent, base.accent);
@@ -148,13 +170,13 @@ function ticketFromApi(data) {
     dateTime: ticket.eventDate || PREVIEW.dateTime,
     startsAt: data.startsAt || PREVIEW.startsAt,
     endsAt: data.endsAt ?? null,
-    location: ticket.location || PREVIEW.location,
+    location: ticket.location || PREVIEW.location,\n    passKind: String(ticket.programType || ticket.program_type || ticket.eventType || ticket.event_type || ticket.type || data.event?.type || data.event?.category || '').trim().toUpperCase() === 'PROGRAM' ? 'program' : 'bus',
   };
 }
 
 function designFromApi(data) {
   const design = data.design || {};
-  const theme = THEMES[design.theme] ? design.theme : 'royal-gold';
+  const theme = THEMES[design.theme] ? design.theme : 'classic-black';
   return {
     theme,
     custom: design.header && design.accent
@@ -169,7 +191,7 @@ function designFromApi(data) {
 }
 
 function currentDesign() {
-  const { theme, custom, quote, graphic } = store.get().design;
+  const { theme, custom } = store.get().design;
   return {
     theme,
     header: custom ? custom.header : null,
@@ -272,7 +294,7 @@ function renderTicket() {
   el.displayDateTime.textContent = data.dateTime;
   el.displayHolderName.textContent = data.name || 'Guest';
   el.displayLocation.textContent = data.location;
-  el.displaySeat.textContent = data.seat || 'General Admission';
+  el.displaySeat.textContent = data.seat || 'General Admission';\n  const busFields = document.querySelectorAll('[data-bus-only]');\n  busFields.forEach((node) => node.classList.toggle('hidden', data.passKind === 'program'));
   el.displayBackEvent.textContent = data.event;
   el.displayScanCode.textContent = data.scanCode || data.id;
   el.displayFooterCode.textContent = `${data.id} · SCAN AT ENTRY`;
@@ -421,7 +443,7 @@ async function loadPass({ force = false } = {}) {
   if (isFilePreview) {
     store.set({
       data: { ...PREVIEW },
-      design: { theme: 'royal-gold', custom: null, quote: 'أحلى لمة ومغامرة في وادي دجلة ✨' },
+      design: { theme: 'classic-black', custom: null, quote: 'أحلى لمة ومغامرة في وادي دجلة ✨' },
       load: { status: 'ready', code: null },
     });
     return;
