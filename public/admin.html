@@ -76,6 +76,7 @@
     ::-webkit-scrollbar { width: 9px; height: 9px; }
     ::-webkit-scrollbar-thumb { background: rgba(22,20,17,.22); border-radius: 9999px; border: 2px solid transparent; background-clip: padding-box; }
   </style>
+  <link rel="stylesheet" href="/assets/tkt.css" />
 </head>
 <body class="min-h-screen text-ink antialiased selection:bg-gold/40">
 
@@ -126,18 +127,18 @@
             <p id="authBadge" class="text-[11px] text-ink/50 truncate">—</p>
           </div>
         </div>
-        <button id="logoutBtn" class="tkt-btn tkt-btn-ghost">خروج</button>
+        <button id="logoutBtn" class="tkt-btn tkt-btn-ghost"><span class="spin" id="logoutSpinner" hidden></span>خروج</button>
       </div>
     </header>
 
     <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 space-y-5">
-      <div id="globalError" class="rounded-2xl border border-red-300 bg-red-50 px-4 py-3 flex items-start gap-3" hidden>
+      <div id="globalError" class="rounded-2xl border border-red-300 bg-red-50 px-4 py-3 flex items-start gap-3" role="alert" hidden>
         <span class="text-red-700 text-lg leading-none">!</span>
         <div class="flex-1">
           <p class="text-xs font-bold text-red-800">تعذّر تحميل البيانات</p>
           <p id="globalErrorText" class="text-xs text-red-700 mt-0.5"></p>
         </div>
-        <button id="retryBtn" class="text-xs font-bold text-red-800 underline">إعادة المحاولة</button>
+        <button id="retryBtn" class="inline-flex items-center gap-1.5 text-xs font-bold text-red-800 underline"><span class="spin" id="retrySpinner" hidden></span>إعادة المحاولة</button>
       </div>
 
       <!-- FILTER FLOW -->
@@ -212,7 +213,7 @@
                 <option value="FAILED">فشل</option>
                 <option value="REVOKED">ملغي</option>
               </select>
-              <button id="refreshBtn" class="tkt-btn tkt-btn-ghost">تحديث</button>
+              <button id="refreshBtn" class="tkt-btn tkt-btn-ghost"><span class="spin" id="refreshSpinner" hidden></span>تحديث</button>
             </div>
             <div id="selectionBar" class="mt-3 rounded-xl bg-gold/15 border border-gold/35 px-3 py-2 flex items-center justify-between gap-3" hidden>
               <p id="selectionText" class="text-xs font-semibold"></p>
@@ -223,7 +224,8 @@
             </div>
           </div>
 
-          <div class="overflow-x-auto">
+          <div id="ticketCards" class="space-y-2 p-3 md:hidden"></div>
+          <div class="hidden overflow-x-auto md:block">
             <table class="w-full min-w-[980px] text-xs">
               <thead class="bg-ink/[.04] text-ink/60">
                 <tr>
@@ -252,7 +254,7 @@
   </div>
 
   <!-- DESIGN MODAL -->
-  <div id="designModal" class="modal-backdrop" hidden>
+  <div id="designModal" class="modal-backdrop" hidden data-dialog>
     <div class="modal-panel tkt-card rounded-3xl max-w-2xl">
       <div class="px-5 sm:px-7 py-5 border-b border-ink/10 flex items-start justify-between gap-4">
         <div>
@@ -284,7 +286,7 @@
           <input id="resetTickets" type="checkbox" class="mt-0.5 h-4 w-4 accent-[#161411]" />
           <span>إعادة ضبط تخصيصات التذاكر الحالية على هذا التصميم</span>
         </label>
-        <p id="designError" class="text-xs text-red-700" hidden></p>
+        <p id="designError" class="text-xs text-red-700" role="alert" hidden></p>
       </div>
       <div class="px-5 sm:px-7 pb-5 flex items-center justify-between gap-2 border-t border-ink/10 pt-4">
         <button id="resetDesignBtn" class="tkt-btn tkt-btn-ghost">إعادة افتراضي</button>
@@ -296,579 +298,7 @@
     </div>
   </div>
 
-  <div id="toastHost" class="fixed bottom-4 left-4 z-[60] space-y-2"></div>
-
-  <script>
-    const TKT_MAIN_LOGIN = 'https://ticketak.vercel.app/login?passHandoff=1';
-    const THEME_COLORS = {
-      'royal-gold': ['#12151c', '#e9c46a'],
-      'rose-blush': ['#2a1620', '#e8a5ac'],
-      'lilac-dream': ['#1b1730', '#b8a5e8'],
-      'emerald-wild': ['#10251d', '#7fd1a3'],
-      'midnight-sky': ['#0d1b2a', '#7db8e8']
-    };
-    const THEME_LABELS = {
-      'royal-gold': 'ذهبي ملكي',
-      'rose-blush': 'وردي',
-      'lilac-dream': 'ليلكي',
-      'emerald-wild': 'زمردي',
-      'midnight-sky': 'ليلي'
-    };
-    const EGYPT_TIME_ZONE = 'Africa/Cairo';
-    function formatEgyptDate(value, options) {
-      if (!value) return '—';
-      return new Intl.DateTimeFormat('en-GB', { ...options, timeZone: EGYPT_TIME_ZONE, hour12: true, hourCycle: 'h12' })
-        .format(new Date(value))
-        .replace(/\s?([ap]m)$/i, (_m, p) => ` ${p.toUpperCase()}`);
-    }
-
-    const state = {
-      explorer: { organizations: [] },
-      orgId: null,
-      folderId: null,
-      folderKey: '',
-      eventFilter: 'upcoming',
-      eventId: null,
-      analytics: null,
-      tickets: [],
-      selected: new Set(),
-      design: null,
-      searchTimer: null
-    };
-
-    function esc(value) {
-      return String(value ?? '')
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
-
-    function api(path, options = {}) {
-      const init = { credentials: 'same-origin', ...options };
-      if (options.body && typeof options.body !== 'string') {
-        init.body = JSON.stringify(options.body);
-        init.headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
-      }
-      return fetch(path, init).then(async (res) => {
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          const err = new Error(data.message || (typeof data.error === 'string' ? data.error : 'REQUEST_FAILED'));
-          err.status = res.status;
-          err.code = data.error;
-          throw err;
-        }
-        return data;
-      });
-    }
-
-    function toast(message, kind = 'ok') {
-      const color = kind === 'error' ? 'border-red-300 bg-red-50 text-red-800' : 'border-gold/40 bg-paper text-ink';
-      const node = document.createElement('div');
-      node.className = `toast rounded-xl border px-4 py-2 text-xs shadow-lg ${color}`;
-      node.textContent = message;
-      document.getElementById('toastHost').appendChild(node);
-      setTimeout(() => node.remove(), 4200);
-    }
-
-    function showError(message) {
-      const box = document.getElementById('globalError');
-      document.getElementById('globalErrorText').textContent = message;
-      box.hidden = false;
-    }
-
-    function clearError() {
-      document.getElementById('globalError').hidden = true;
-    }
-
-    function busy(id, on) {
-      const el = document.getElementById(id);
-      if (el) el.hidden = !on;
-    }
-
-    async function boot() {
-      const params = new URLSearchParams(location.search);
-      if (params.get('handoff') === 'error') {
-        document.getElementById('loginError').textContent = 'انتهت صلاحية رابط TKT. سجّل الدخول من TKT مرة أخرى.';
-        document.getElementById('loginError').hidden = false;
-      }
-      try {
-        const auth = await api('/api/admin/auth');
-        if (!auth.authenticated) return showLogin();
-        showApp(auth.actor);
-        await loadExplorer();
-      } catch (error) {
-        showLogin();
-      }
-    }
-
-    function showLogin() {
-      document.getElementById('loginView').hidden = false;
-      document.getElementById('appView').hidden = true;
-    }
-
-    function showApp(actor) {
-      document.getElementById('loginView').hidden = true;
-      document.getElementById('appView').hidden = false;
-      const label = actor?.name || actor?.email || (actor?.master ? 'Master admin' : 'TKT user');
-      document.getElementById('authBadge').textContent = `${label}${actor?.master ? ' · master' : ''}`;
-    }
-
-    function org() {
-      return state.explorer.organizations.find((item) => item.id === state.orgId) || null;
-    }
-
-    async function loadExplorer() {
-      try {
-        clearError();
-        const data = await api('/api/admin/explorer');
-        state.explorer = data;
-        const orgs = data.organizations || [];
-        const select = document.getElementById('orgSelect');
-        select.innerHTML = orgs.map((item) => `<option value="${esc(item.id)}">${esc(item.name)}</option>`).join('');
-        if (!orgs.some((item) => item.id === state.orgId)) {
-          state.orgId = orgs[0]?.id || null;
-          state.folderKey = '';
-          state.folderId = null;
-          state.eventId = null;
-        }
-        if (state.orgId) select.value = state.orgId;
-        renderFolders();
-      } catch (error) {
-        showError(error.message);
-      }
-    }
-
-    function renderFolders() {
-      selectDefaultFolder();
-      const current = org();
-      const folders = current?.folders || [];
-      const hasUnfiled = (current?.events || []).some((event) => !event.folderId);
-      const options = folders.map((folder) => `<option value="${esc(folder.id)}">${esc(folder.name)}</option>`);
-      if (hasUnfiled) options.push('<option value="__none__">بدون مجلد · No folder</option>');
-      const select = document.getElementById('folderSelect');
-      select.innerHTML = options.join('') || '<option value="">لا توجد مجلدات</option>';
-      if (state.folderKey) select.value = state.folderKey;
-      else if (options.length) {
-        state.folderKey = select.value;
-        state.folderId = state.folderKey === '__none__' ? null : state.folderKey;
-      }
-      renderEvents();
-    }
-
-    function selectDefaultFolder() {
-      const current = org();
-      if (!current) { state.folderKey = ''; state.folderId = null; return; }
-      const folders = current.folders || [];
-      const keys = folders.map((folder) => folder.id);
-      if ((current.events || []).some((event) => !event.folderId)) keys.push('__none__');
-      if (state.folderKey && keys.includes(state.folderKey)) return;
-      state.folderKey = keys[0] || '';
-      state.folderId = state.folderKey === '__none__' || !state.folderKey ? null : state.folderKey;
-    }
-
-    function isPast(event) {
-      if (event.status === 'COMPLETED' || event.status === 'ARCHIVED') return true;
-      if (event.endAt && new Date(event.endAt).getTime() < Date.now()) return true;
-      return false;
-    }
-
-    function filteredEvents() {
-      const current = org();
-      if (!current) return [];
-      const inFolder = (current.events || []).filter((event) => {
-        if (state.folderKey === '__none__') return !event.folderId;
-        if (state.folderKey) return event.folderId === state.folderKey;
-        return true;
-      });
-      let list = inFolder;
-      if (state.eventFilter === 'upcoming') list = inFolder.filter((event) => !isPast(event));
-      if (state.eventFilter === 'past') list = inFolder.filter((event) => isPast(event));
-      return [...list].sort((a, b) => {
-        const at = new Date(a.startAt || 0).getTime();
-        const bt = new Date(b.startAt || 0).getTime();
-        return state.eventFilter === 'past' ? bt - at : at - bt;
-      });
-    }
-
-    function statusLabel(status) {
-      return ({
-        DRAFT: 'مسودة', PLANNING: 'تخطيط', READY: 'جاهزة', PUBLISHED: 'منشورة',
-        LIVE: 'مباشرة', COMPLETED: 'منتهية', ARCHIVED: 'أرشيف'
-      })[status] || status || '—';
-    }
-
-    function renderEvents() {
-      document.querySelectorAll('.filter-btn').forEach((button) => {
-        const active = button.dataset.filter === state.eventFilter;
-        button.className = `filter-btn tkt-btn flex-1 py-1.5 text-xs ${active ? 'tkt-btn-ink' : 'tkt-btn-ghost'}`;
-      });
-      const current = org();
-      const folder = (current?.folders || []).find((item) => item.id === state.folderId);
-      document.getElementById('folderTitle').textContent = folder?.name || 'بدون مجلد · No folder';
-      const events = filteredEvents();
-      document.getElementById('eventCount').textContent = `${events.length} event${events.length === 1 ? '' : 's'}`;
-      const list = document.getElementById('eventList');
-
-      if (!events.length) {
-        list.innerHTML = '<p class="text-xs text-ink/50 col-span-full">لا توجد فعاليات في هذا العرض.</p>';
-        return;
-      }
-
-      list.innerHTML = events.map((event) => {
-        const active = event.id === state.eventId;
-        const date = formatEgyptDate(event.startAt, { day: 'numeric', month: 'short', year: 'numeric' });
-        return `<button class="event-card text-right rounded-2xl border p-3 transition ${active ? 'border-gold bg-gold/15' : 'border-ink/10 bg-white/60 hover:border-gold/60'}"
-                        data-event="${esc(event.id)}">
-                  <div class="flex items-start justify-between gap-2">
-                    <p class="text-sm font-bold leading-snug truncate">${esc(event.name)}</p>
-                    <span class="text-[9px] rounded-full px-2 py-0.5 bg-ink/5 text-ink/60 whitespace-nowrap">${esc(statusLabel(event.status))}</span>
-                  </div>
-                  <p class="text-[11px] text-ink/50 mt-1 ltr">${esc(date)}</p>
-                  <p class="text-[11px] text-ink/45 mt-2">${Number(event.ticketCount || 0)} ticket${Number(event.ticketCount || 0) === 1 ? '' : 's'}</p>
-                </button>`;
-      }).join('');
-
-      list.querySelectorAll('.event-card').forEach((button) => {
-        button.addEventListener('click', () => selectEvent(button.dataset.event));
-      });
-
-      if (state.eventId && !events.some((item) => item.id === state.eventId)) {
-        state.eventId = null;
-        document.getElementById('eventPanel').hidden = true;
-      }
-    }
-
-    async function selectEvent(eventId) {
-      state.eventId = eventId;
-      state.selected.clear();
-      document.getElementById('eventPanel').hidden = false;
-      renderEvents();
-      await loadEventData();
-    }
-
-    async function loadEventData() {
-      if (!state.eventId) return;
-      try {
-        clearError();
-        busy('tableSpinner', true);
-        const params = new URLSearchParams({
-          approval: document.getElementById('approvalFilter').value,
-          passStatus: document.getElementById('passFilter').value
-        });
-        const q = document.getElementById('ticketSearch').value.trim();
-        if (q) params.set('q', q);
-        const [analytics, ticketData] = await Promise.all([
-          api(`/api/admin/analytics?eventId=${encodeURIComponent(state.eventId)}`),
-          api(`/api/admin/tickets?eventId=${encodeURIComponent(state.eventId)}&${params.toString()}`)
-        ]);
-        state.analytics = analytics;
-        state.tickets = ticketData.tickets || [];
-        renderAnalytics();
-        renderTickets();
-      } catch (error) {
-        showError(error.message);
-      } finally {
-        busy('tableSpinner', false);
-      }
-    }
-
-    function statCard(label, sub, value, tone = '') {
-      return `<div class="tkt-card rounded-2xl p-3 sm:p-4">
-                <p class="text-[10px] font-semibold text-ink/55">${esc(label)} <span class="block font-display font-normal text-[8px] text-ink/35">${esc(sub)}</span></p>
-                <p class="font-display text-xl sm:text-2xl font-semibold mt-2 ${tone}">${esc(value)}</p>
-              </div>`;
-    }
-
-    function breakdownCard(title, entries) {
-      const rows = entries.map(([label, value]) => `<div class="flex items-center justify-between border-t border-ink/5 py-1.5 first:border-0">
-          <span class="text-[11px] text-ink/55">${esc(label)}</span>
-          <span class="text-xs font-semibold font-display">${esc(value)}</span>
-        </div>`).join('');
-      return `<div class="tkt-card rounded-2xl p-4">
-                <p class="text-xs font-bold mb-2">${esc(title)}</p>${rows || '<p class="text-[11px] text-ink/45">—</p>'}
-              </div>`;
-    }
-
-    function renderAnalytics() {
-      const data = state.analytics;
-      if (!data) return;
-      const stats = data.stats || {};
-      const pass = stats.pass || {};
-      const approval = stats.approval || {};
-      document.getElementById('eventTitle').textContent = data.event?.name || '—';
-      const when = formatEgyptDate(data.event?.startAt, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-      document.getElementById('eventMeta').textContent = `${data.event?.org?.name || ''} · ${when} · ${data.event?.venueName || ''}`;
-
-      document.getElementById('statsGrid').innerHTML = [
-        statCard('أشخاص', 'People', stats.people ?? 0),
-        statCard('تذاكر', 'Tickets', stats.tickets ?? 0),
-        statCard('جوازات مؤهلة', 'Eligible passes', stats.eligiblePasses ?? 0, 'text-emerald-700'),
-        statCard('مُرسَلة', 'Delivered', pass.DELIVERED ?? 0),
-        statCard('مفتوحة', 'Opened', stats.opened ?? 0),
-        statCard('مُخصّصة', 'Customized', stats.customized ?? 0)
-      ].join('');
-
-      const approvalEntries = Object.entries(approval).map(([key, value]) => [
-        ({ APPROVED: 'موافق عليه', PENDING: 'قيد الانتظار', REJECTED: 'مرفوض', NONE: 'بدون' })[key] || key,
-        value
-      ]);
-      const passEntries = Object.entries(pass).map(([key, value]) => [
-        ({ NOT_ISSUED: 'لم يُصدر', ISSUED: 'مُصدر', DELIVERED: 'مُرسل', FAILED: 'فشل', REVOKED: 'ملغي' })[key] || key,
-        value
-      ]);
-      document.getElementById('breakdownGrid').innerHTML = [
-        breakdownCard('حالات الموافقة · Approvals', approvalEntries),
-        breakdownCard('حالات الجواز · Passes', passEntries)
-      ].join('');
-    }
-
-    function badge(value, map) {
-      const entry = map[value] || { label: value || '—', cls: 'bg-ink/5 text-ink/60' };
-      return `<span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${entry.cls}">${esc(entry.label)}</span>`;
-    }
-
-    const APPROVAL_BADGES = {
-      APPROVED: { label: 'موافق عليه', cls: 'bg-emerald-100 text-emerald-800' },
-      PENDING: { label: 'قيد الانتظار', cls: 'bg-amber-100 text-amber-800' },
-      REJECTED: { label: 'مرفوض', cls: 'bg-red-100 text-red-800' },
-      NONE: { label: 'بدون', cls: 'bg-ink/5 text-ink/60' }
-    };
-    const PASS_BADGES = {
-      NOT_ISSUED: { label: 'لم يُصدر', cls: 'bg-ink/5 text-ink/60' },
-      ISSUED: { label: 'مُصدر', cls: 'bg-blue-100 text-blue-800' },
-      DELIVERED: { label: 'مُرسل', cls: 'bg-emerald-100 text-emerald-800' },
-      FAILED: { label: 'فشل', cls: 'bg-red-100 text-red-800' },
-      REVOKED: { label: 'ملغي', cls: 'bg-ink/5 text-ink/60' }
-    };
-    const PAYMENT_BADGES = {
-      NOT_REQUIRED: { label: 'لا يتطلب', cls: 'bg-ink/5 text-ink/60' },
-      CONFIRMED: { label: 'مؤكد', cls: 'bg-emerald-100 text-emerald-800' },
-      PENDING: { label: 'قيد المراجعة', cls: 'bg-amber-100 text-amber-800' },
-      FAILED: { label: 'فشل', cls: 'bg-red-100 text-red-800' }
-    };
-
-    function renderTickets() {
-      const body = document.getElementById('ticketsBody');
-      document.getElementById('ticketCount').textContent = `${state.tickets.length} ticket${state.tickets.length === 1 ? '' : 's'}`;
-      document.getElementById('emptyState').hidden = state.tickets.length > 0;
-      const eligibleCount = state.tickets.filter((ticket) => ticket.eligible).length;
-      document.getElementById('selectAll').checked = eligibleCount > 0 && state.selected.size === eligibleCount;
-
-      body.innerHTML = state.tickets.map((ticket) => {
-        const selected = state.selected.has(ticket.id);
-        return `<tr class="${selected ? 'bg-gold/10' : ''}">
-          <td class="px-3 py-2.5"><input type="checkbox" class="row-check h-4 w-4 accent-[#161411]" data-id="${esc(ticket.id)}" ${selected ? 'checked' : ''} ${ticket.eligible ? '' : 'disabled title="غير مؤهل · Not eligible"'} /></td>
-          <td class="px-3 py-2.5 font-display text-[11px] ltr">${esc(ticket.id)}</td>
-          <td class="px-3 py-2.5 font-semibold">${esc(ticket.name || '—')}</td>
-          <td class="px-3 py-2.5 ltr text-[11px] text-ink/60" dir="ltr">${esc(ticket.email || '—')}</td>
-          <td class="px-3 py-2.5 text-[11px]">${esc(ticket.seat || '—')}</td>
-          <td class="px-3 py-2.5">${badge(ticket.approval, APPROVAL_BADGES)}</td>
-          <td class="px-3 py-2.5">${badge(ticket.payment, PAYMENT_BADGES)}</td>
-          <td class="px-3 py-2.5">${badge(ticket.passStatus, PASS_BADGES)}${ticket.eligible ? '' : '<span class="mr-1 text-[9px] text-ink/35">غير مؤهل</span>'}</td>
-          <td class="px-3 py-2.5">
-            <div class="flex gap-1">
-              <button class="preview-btn tkt-btn tkt-btn-ghost py-1 px-2 text-[10px]" data-id="${esc(ticket.id)}" ${ticket.eligible ? '' : 'disabled title="وافق على الحجز وأكّد الدفع قبل المعاينة · Approve and confirm payment first"'}>معاينة</button>
-              <button class="resend-btn tkt-btn tkt-btn-ink py-1 px-2 text-[10px]" data-id="${esc(ticket.id)}" ${ticket.eligible ? '' : 'disabled title="وافق على الحجز وأكّد الدفع قبل الإرسال · Approve and confirm payment first"'}>إرسال</button>
-            </div>
-          </td>
-        </tr>`;
-      }).join('');
-
-      body.querySelectorAll('.row-check').forEach((box) => box.addEventListener('change', () => {
-        if (box.checked) state.selected.add(box.dataset.id); else state.selected.delete(box.dataset.id);
-        renderTickets();
-      }));
-      body.querySelectorAll('.preview-btn').forEach((button) => button.addEventListener('click', () => previewTicket(button.dataset.id)));
-      body.querySelectorAll('.resend-btn').forEach((button) => button.addEventListener('click', () => sendTickets([button.dataset.id])));
-
-      const bar = document.getElementById('selectionBar');
-      bar.hidden = state.selected.size === 0;
-      document.getElementById('selectionText').textContent = `${state.selected.size} ticket selected`;
-    }
-
-    async function previewTicket(ticketId) {
-      try {
-        const data = await api('/api/admin/preview', { method: 'POST', body: { ticketId } });
-        window.open(data.url, '_blank', 'noopener');
-      } catch (error) {
-        toast(error.status === 409
-          ? 'هذا الحجز غير مؤهل بعد — وافق عليه وأكّد الدفع أولاً · Approve and confirm payment first'
-          : error.message, 'error');
-      }
-    }
-
-    async function sendTickets(ids) {
-      if (!ids || !ids.length) return;
-      busy('sendSelectedSpinner', true);
-      try {
-        const data = await api('/api/admin/send', { method: 'POST', body: { ids } });
-        toast(data.capReached ? `تم تجاوز الحد اليومي · ${data.queued} queued` : `تمت إضافة ${data.queued} جواز إلى قائمة الإرسال`);
-        await loadEventData();
-      } catch (error) {
-        toast(error.message, 'error');
-      } finally {
-        busy('sendSelectedSpinner', false);
-      }
-    }
-
-    async function sendRemaining() {
-      if (!state.eventId) return;
-      busy('sendSpinner', true);
-      try {
-        const data = await api('/api/admin/send', { method: 'POST', body: { eventId: state.eventId } });
-        toast(data.capReached ? `تم تجاوز الحد اليومي · ${data.queued} queued` : `تمت إضافة ${data.queued} جواز إلى قائمة الإرسال`);
-        await loadEventData();
-      } catch (error) {
-        toast(error.message, 'error');
-      } finally {
-        busy('sendSpinner', false);
-      }
-    }
-
-    async function openDesign() {
-      if (!state.eventId) return;
-      try {
-        const data = await api(`/api/admin/design?eventId=${encodeURIComponent(state.eventId)}`);
-        state.design = data.design || { theme: 'royal-gold', header: null, accent: null, quote: '' };
-        fillDesign(state.design);
-        document.getElementById('designModal').hidden = false;
-      } catch (error) {
-        toast(error.message, 'error');
-      }
-    }
-
-    function fillDesign(design) {
-      const defaults = THEME_COLORS[design.theme] || THEME_COLORS['royal-gold'];
-      document.getElementById('designHeader').value = design.header || defaults[0];
-      document.getElementById('designAccent').value = design.accent || defaults[1];
-      document.getElementById('designQuote').value = design.quote || '';
-      document.querySelectorAll('.theme-swatch').forEach((button) => {
-        const active = button.dataset.theme === design.theme;
-        button.className = `theme-swatch rounded-xl border-2 px-3 py-2 text-[10px] font-semibold ${active ? 'border-gold bg-gold/15' : 'border-ink/10 bg-white/60'}`;
-      });
-    }
-
-    function readDesign() {
-      return {
-        theme: state.design?.theme || 'royal-gold',
-        header: document.getElementById('designHeader').value,
-        accent: document.getElementById('designAccent').value,
-        quote: document.getElementById('designQuote').value
-      };
-    }
-
-    async function saveDesign(reset) {
-      if (!state.eventId) return;
-      busy('designSpinner', true);
-      try {
-        if (reset) {
-          await api('/api/admin/design', { method: 'POST', body: { eventId: state.eventId } });
-        } else {
-          await api('/api/admin/design', {
-            method: 'PUT',
-            body: {
-              eventId: state.eventId,
-              design: readDesign(),
-              resetTickets: document.getElementById('resetTickets').checked
-            }
-          });
-        }
-        document.getElementById('designModal').hidden = true;
-        toast(reset ? 'تمت إعادة التصميم الافتراضي' : 'تم حفظ التصميم');
-        await loadEventData();
-      } catch (error) {
-        document.getElementById('designError').textContent = error.message;
-        document.getElementById('designError').hidden = false;
-      } finally {
-        busy('designSpinner', false);
-      }
-    }
-
-    // Bind UI
-    document.getElementById('loginForm').addEventListener('submit', async (event) => {
-      event.preventDefault();
-      busy('loginSpinner', true);
-      document.getElementById('loginError').hidden = true;
-      try {
-        const password = document.getElementById('passwordInput').value;
-        await api('/api/admin/auth', { method: 'POST', body: { password } });
-        showApp({ master: true, name: 'Master admin' });
-        await loadExplorer();
-      } catch (error) {
-        document.getElementById('loginError').textContent = error.message;
-        document.getElementById('loginError').hidden = false;
-      } finally {
-        busy('loginSpinner', false);
-      }
-    });
-
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-      try { await api('/api/admin/logout', { method: 'POST', body: {} }); } catch {}
-      location.reload();
-    });
-
-    document.getElementById('retryBtn').addEventListener('click', () => loadExplorer());
-
-    document.getElementById('orgSelect').addEventListener('change', (event) => {
-      state.orgId = event.target.value;
-      state.folderKey = '';
-      state.folderId = null;
-      state.eventId = null;
-      document.getElementById('eventPanel').hidden = true;
-      renderFolders();
-    });
-
-    document.getElementById('folderSelect').addEventListener('change', (event) => {
-      state.folderKey = event.target.value;
-      state.folderId = state.folderKey === '__none__' || !state.folderKey ? null : state.folderKey;
-      state.eventId = null;
-      document.getElementById('eventPanel').hidden = true;
-      renderEvents();
-    });
-
-    document.querySelectorAll('.filter-btn').forEach((button) => button.addEventListener('click', () => {
-      state.eventFilter = button.dataset.filter;
-      renderEvents();
-    }));
-
-    document.getElementById('approvalFilter').addEventListener('change', () => state.eventId && loadEventData());
-    document.getElementById('passFilter').addEventListener('change', () => state.eventId && loadEventData());
-    document.getElementById('refreshBtn').addEventListener('click', () => state.eventId && loadEventData());
-    document.getElementById('ticketSearch').addEventListener('input', () => {
-      clearTimeout(state.searchTimer);
-      state.searchTimer = setTimeout(() => state.eventId && loadEventData(), 350);
-    });
-
-    document.getElementById('selectAll').addEventListener('change', (event) => {
-      state.selected = new Set(event.target.checked ? state.tickets.filter((ticket) => ticket.eligible).map((ticket) => ticket.id) : []);
-      renderTickets();
-    });
-    document.getElementById('clearSelectionBtn').addEventListener('click', () => {
-      state.selected.clear();
-      renderTickets();
-    });
-    document.getElementById('sendSelectedBtn').addEventListener('click', () => sendTickets([...state.selected]));
-    document.getElementById('sendRemainingBtn').addEventListener('click', sendRemaining);
-    document.getElementById('designBtn').addEventListener('click', openDesign);
-    document.getElementById('saveDesignBtn').addEventListener('click', () => saveDesign(false));
-    document.getElementById('resetDesignBtn').addEventListener('click', () => saveDesign(true));
-    document.querySelectorAll('[data-close-design]').forEach((button) => button.addEventListener('click', () => {
-      document.getElementById('designModal').hidden = true;
-    }));
-
-    const swatches = document.getElementById('themeSwatches');
-    swatches.innerHTML = Object.keys(THEME_LABELS).map((theme) => {
-      const colors = THEME_COLORS[theme];
-      return `<button type="button" class="theme-swatch rounded-xl border-2 border-ink/10 bg-white/60 px-3 py-2 text-[10px] font-semibold" data-theme="${esc(theme)}">
-                <span class="block h-4 w-4 rounded-full mx-auto mb-1" style="background:linear-gradient(135deg,${colors[0]},${colors[1]})"></span>
-                ${esc(THEME_LABELS[theme])}
-              </button>`;
-    }).join('');
-    swatches.querySelectorAll('.theme-swatch').forEach((button) => button.addEventListener('click', () => {
-      state.design = { ...(state.design || {}), theme: button.dataset.theme };
-      fillDesign(state.design);
-    }));
-
-    boot();
-  </script>
+  <div id="toastHost" class="fixed bottom-4 left-4 right-4 z-[60] space-y-2 sm:left-auto sm:right-4 sm:w-80" aria-live="polite"></div>
+  <script type="module" src="/assets/admin.js"></script>
 </body>
 </html>

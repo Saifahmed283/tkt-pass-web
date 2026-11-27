@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vercel dev",
+    "check": "node --check public/assets/tkt-runtime.js && node --check public/assets/pass.js && node --check public/assets/admin.js",
     "deploy": "vercel --prod",
     "test:send": "node scripts/send-test.mjs"
   },

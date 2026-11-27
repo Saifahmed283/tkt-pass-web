@@ -10,11 +10,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <!-- QRCode Generator Library (Auto-sizes QR version to prevent overflow) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-  <!-- html2canvas: renders the exact pass design into a saveable wallet-style image -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
   <style>
     body {
       font-family: 'Poppins', 'Cairo', sans-serif;
@@ -163,11 +158,12 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="/assets/tkt.css" />
 </head>
 <body class="min-h-screen flex flex-col items-center justify-start py-6 px-4 sm:py-10">
 
   <!-- Loading / invalid / expired link state -->
-  <div id="passOverlay" class="no-print fixed inset-0 z-[60] flex items-center justify-center px-6 text-center">
+  <div id="passOverlay" class="no-print fixed inset-0 z-[60] flex items-center justify-center px-6 text-center" aria-live="polite">
     <div class="overlay-card w-full max-w-[340px] rounded-3xl bg-[#F7F5F0] border border-[#D8D1C2] p-7">
       <div id="overlaySpinner" class="mx-auto mb-5 h-10 w-10 animate-spin rounded-full border-4 border-[#D4B475] border-t-transparent"></div>
       <div id="overlayIcon" class="hidden mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#EFECE4] text-2xl">🔒</div>
@@ -184,16 +180,17 @@
   </div>
 
   <!-- Main Mobile Pass Container -->
-  <main class="w-full max-w-[390px] mx-auto">
+  <main class="w-full max-w-[390px] sm:max-w-[440px] lg:max-w-[480px] mx-auto">
 
     <!-- Status Pill (Outside Card) -->
-    <div class="no-print flex items-center justify-between mb-3 px-1">
+    <div class="no-print flex flex-wrap items-center justify-between gap-y-2 gap-x-3 mb-3 px-1">
       <div class="flex items-center gap-2">
         <span class="inline-block w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-        <span class="text-xs font-medium text-[#4A453D] tracking-wide">VALID DIGITAL PASS · <span class="font-arabic">تذكرة صالحة</span></span>
+        <span class="text-[11px] sm:text-xs font-medium text-[#4A453D] tracking-wide">VALID DIGITAL PASS · <span class="font-arabic">تذكرة صالحة</span></span>
       </div>
-      <div class="flex items-center gap-3">
-        <span id="saveStatus" class="hidden text-[10px] font-semibold text-emerald-700 font-arabic">تم الحفظ ✓</span>
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span id="passActionStatus" class="tkt-status hidden text-[10px] font-semibold font-arabic" role="status" aria-live="polite"></span>
+        <span id="saveStatus" class="tkt-status hidden text-[10px] font-semibold font-arabic" role="status" aria-live="polite">تم الحفظ ✓</span>
         <button
           id="flipCardBtn"
           type="button"
@@ -357,7 +354,7 @@
 
           <p id="displayScanCode" class="mt-5 text-[14px] font-bold tracking-[0.16em] text-[var(--pass-accent-dark)] transition-colors duration-300">TKT-XXXXXX</p>
           <p id="displayFooterCode" class="mt-1.5 text-[12px] font-medium tracking-[0.06em] uppercase text-[#6E685F]">
-            TKT-26001 · SCAN AT ENTRY
+            TKT-PASS · SCAN AT ENTRY
           </p>
 
           <button
@@ -375,12 +372,12 @@
     <!-- ========================================================= -->
     <!-- QUICK MOBILE ACTION BUTTONS (Calendar, Maps, Print/Save)  -->
     <!-- ========================================================= -->
-    <section class="no-print mt-4 grid grid-cols-4 gap-2">
+    <section class="no-print mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
       <!-- Add to Calendar (.ics) -->
       <button
         id="downloadIcsBtn"
         type="button"
-        class="flex flex-col items-center justify-center gap-1.5 bg-[#161411] hover:bg-[#2A2621] active:scale-[0.98] text-white py-3 px-2 rounded-2xl shadow-sm transition-all cursor-pointer"
+        class="flex flex-col items-center justify-center gap-1.5 bg-[#161411] hover:bg-[#2A2621] active:scale-[0.98] text-white py-3 px-2 min-h-[58px] rounded-2xl shadow-sm transition-all cursor-pointer"
       >
         <svg class="w-4 h-4 text-[#D4B475]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -410,7 +407,7 @@
       <button
         id="printPassBtn"
         type="button"
-        class="flex flex-col items-center justify-center gap-1.5 bg-[#F7F5F0] hover:bg-white active:scale-[0.98] text-[#161411] border border-[#D8D1C2] py-3 px-2 rounded-2xl shadow-sm transition-all cursor-pointer"
+        class="flex flex-col items-center justify-center gap-1.5 bg-[#F7F5F0] hover:bg-white active:scale-[0.98] text-[#161411] border border-[#D8D1C2] py-3 px-2 min-h-[58px] rounded-2xl shadow-sm transition-all cursor-pointer"
       >
         <svg class="w-4 h-4 text-[#9E7B3B]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -424,7 +421,7 @@
       <button
         id="saveWalletBtn"
         type="button"
-        class="flex flex-col items-center justify-center gap-1.5 bg-[#D4B475] hover:bg-[#E4C68C] active:scale-[0.98] text-[#161411] py-3 px-1.5 rounded-2xl shadow-sm transition-all cursor-pointer"
+        class="flex flex-col items-center justify-center gap-1.5 bg-[#D4B475] hover:bg-[#E4C68C] active:scale-[0.98] text-[#161411] py-3 px-1.5 min-h-[58px] rounded-2xl shadow-sm transition-all cursor-pointer"
       >
         <svg class="w-4 h-4 text-[#161411]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <rect x="2" y="5" width="20" height="14" rx="3"></rect>
@@ -444,6 +441,7 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="editModalTitle"
+      data-dialog
     >
       <div class="w-full max-w-[360px] rounded-3xl bg-[#F7F5F0] p-5 shadow-2xl" dir="rtl">
         <div class="flex items-center justify-between mb-2">
@@ -566,6 +564,7 @@
     class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-xs p-5"
     role="dialog"
     aria-modal="true"
+    data-dialog
   >
     <div class="w-full max-w-[340px] rounded-3xl bg-white p-6 text-center shadow-2xl">
       <div class="flex items-center justify-between mb-3">
@@ -585,7 +584,7 @@
         <div id="qrcodeLarge"></div>
       </div>
 
-      <p id="modalTicketId" class="mt-4 text-sm font-bold tracking-wider text-[#161411]">TKT-26001</p>
+      <p id="modalTicketId" class="mt-4 text-sm font-bold tracking-wider text-[#161411]">TKT-PASS</p>
       <p class="mt-1 text-xs text-[#6E685F] font-arabic">وجّه الشاشة نحو ماسح التذاكر عند البوابة</p>
     </div>
   </div>
@@ -598,6 +597,7 @@
     class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-xs p-5"
     role="dialog"
     aria-modal="true"
+    data-dialog
   >
     <div class="w-full max-w-[360px] rounded-3xl bg-[#E7E3D8] p-5 text-center shadow-2xl">
       <div class="flex items-center justify-between mb-3">
@@ -612,7 +612,7 @@
       </div>
 
       <img id="walletPreviewImg" alt="Wallet pass preview" class="wallet-pass-img mx-auto" />
-      <p id="walletStatus" class="mt-3 text-[11px] text-[#6E685F] font-arabic">جاري تجهيز بطاقة المحفظة...</p>
+      <p id="walletStatus" class="mt-3 text-[11px] text-[#6E685F] font-arabic" role="status" aria-live="polite">جاري تجهيز بطاقة المحفظة...</p>
 
       <div class="mt-4 grid grid-cols-2 gap-2">
         <button
@@ -635,600 +635,6 @@
       </p>
     </div>
   </div>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Curated palettes for the pass
-      const THEMES = {
-        'royal-gold': {
-          header: '#161411',
-          accent: '#D4B475',
-          accentDark: '#9E7B3B',
-          accentLight: '#FFF2CC',
-          body: '#F7F5F0',
-          footer: '#EFECE4'
-        },
-        'rose-blush': {
-          header: '#2D1824',
-          accent: '#F4A9C7',
-          accentDark: '#B84A78',
-          accentLight: '#FFE4F0',
-          body: '#FDF7FA',
-          footer: '#F7EBF1'
-        },
-        'lilac-dream': {
-          header: '#211936',
-          accent: '#C8B2FF',
-          accentDark: '#6D4AC4',
-          accentLight: '#EFE8FF',
-          body: '#F8F6FC',
-          footer: '#EFEBF7'
-        },
-        'emerald-wild': {
-          header: '#10261F',
-          accent: '#6EE7B7',
-          accentDark: '#1E7A58',
-          accentLight: '#D1FAE5',
-          body: '#F5FAF8',
-          footer: '#E8F3EE'
-        },
-        'midnight-sky': {
-          header: '#0F1E33',
-          accent: '#7DD3FC',
-          accentDark: '#1D6FA5',
-          accentLight: '#E0F2FE',
-          body: '#F5F9FC',
-          footer: '#E8F1F8'
-        }
-      };
-
-      // Helpers for the guest-editable colors
-      function normalizeHex(value, fallback) {
-        return /^#[0-9a-fA-F]{6}$/.test(value || '') ? value.toLowerCase() : fallback;
-      }
-
-      function mixColors(hexA, hexB, weightOfB) {
-        const a = normalizeHex(hexA, '#000000');
-        const b = normalizeHex(hexB, '#FFFFFF');
-        const t = Math.max(0, Math.min(1, weightOfB));
-        const channel = (i) => {
-          const av = parseInt(a.slice(1 + i * 2, 3 + i * 2), 16);
-          const bv = parseInt(b.slice(1 + i * 2, 3 + i * 2), 16);
-          return Math.round(av + (bv - av) * t).toString(16).padStart(2, '0');
-        };
-        return `#${channel(0)}${channel(1)}${channel(2)}`;
-      }
-
-      // Full palette from a preset, with optional custom header/accent overrides
-      function getPalette(themeKey, custom) {
-        const base = THEMES[themeKey] || THEMES['royal-gold'];
-        if (!custom) return base;
-        const header = normalizeHex(custom.header, base.header);
-        const accent = normalizeHex(custom.accent, base.accent);
-        return {
-          header,
-          accent,
-          accentDark: mixColors(accent, '#000000', 0.3),
-          accentLight: mixColors(accent, '#FFFFFF', 0.8),
-          body: mixColors('#FFFFFF', accent, 0.05),
-          footer: mixColors('#FFFFFF', accent, 0.12)
-        };
-      }
-
-      // Default Wadi Degla Protectorate event configuration
-      const state = {
-        theme: 'royal-gold',
-        custom: null, // { header, accent } picked by the guest; null = use preset
-        event: 'Wadi Degla Escape',
-        subtitle: 'مغامرة محمية وادي دجلة · An Extraordinary Day',
-        dateTime: 'Friday, 4 December at 08:34 PM',
-        startsAt: '2026-12-04T18:34:00.000Z',
-        endsAt: null,
-        name: 'Omar Khaled',
-        location: 'Wadi Degla Protectorate · المعادي',
-        seat: 'Bus 01 · Seat A4',
-        keepsake: 'أحلى لمة ومغامرة في وادي دجلة ✨',
-        id: 'TKT-26001',
-        scanCode: ''
-      };
-
-      // Identity is NEVER read from query params. It comes only from the signed API response.
-      const params = new URLSearchParams(window.location.search);
-      const ticketToken = params.get('t') || '';
-      const isFilePreview = window.location.protocol === 'file:' && !ticketToken;
-
-      const overlay = document.getElementById('passOverlay');
-      const overlaySpinner = document.getElementById('overlaySpinner');
-      const overlayIcon = document.getElementById('overlayIcon');
-      const overlayTitle = document.getElementById('overlayTitle');
-      const overlayMessage = document.getElementById('overlayMessage');
-      const overlayActionBtn = document.getElementById('overlayActionBtn');
-      const saveStatus = document.getElementById('saveStatus');
-      let saveTimer = null;
-
-      function showOverlay(title, message, canRetry, icon) {
-        overlay.classList.remove('hidden');
-        overlayTitle.textContent = title;
-        overlayMessage.textContent = message || '';
-        overlayActionBtn.classList.toggle('hidden', !canRetry);
-        overlaySpinner.classList.toggle('hidden', !!icon);
-        overlayIcon.classList.toggle('hidden', !icon);
-        if (icon) overlayIcon.textContent = icon;
-      }
-
-      function hideOverlay() {
-        overlay.classList.add('hidden');
-      }
-
-      function flashSaveStatus(text, ok) {
-        saveStatus.textContent = text;
-        saveStatus.classList.remove('hidden', 'text-emerald-700', 'text-[#B84A78]');
-        saveStatus.classList.add(ok ? 'text-emerald-700' : 'text-[#B84A78]');
-        clearTimeout(saveStatus._timer);
-        saveStatus._timer = setTimeout(() => saveStatus.classList.add('hidden'), 2400);
-      }
-
-      async function apiFetch(path, options = {}) {
-        const res = await fetch(path, { credentials: 'same-origin', ...options });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          const err = new Error(data.error || 'REQUEST_FAILED');
-          err.code = data.error;
-          err.status = res.status;
-          throw err;
-        }
-        return data;
-      }
-
-      function applyTicketData(data) {
-        const t = data.ticket || {};
-        state.id = t.id || state.id;
-        state.scanCode = t.scanCode || '';
-        state.name = t.name || 'Guest';
-        state.seat = t.seat || 'General Admission';
-        state.event = t.eventTitle || state.event;
-        state.subtitle = t.eventSubtitle || state.subtitle;
-        state.dateTime = t.eventDate || state.dateTime;
-        state.startsAt = data.startsAt || state.startsAt;
-        state.endsAt = data.endsAt ?? state.endsAt;
-        state.location = t.location || state.location;
-
-        const d = data.design || {};
-        state.theme = THEMES[d.theme] ? d.theme : 'royal-gold';
-        state.custom = (d.header && d.accent)
-          ? {
-              header: normalizeHex(d.header, THEMES[state.theme].header),
-              accent: normalizeHex(d.accent, THEMES[state.theme].accent)
-            }
-          : null;
-        state.keepsake = d.quote || '';
-      }
-
-      function currentDesign() {
-        return {
-          theme: state.theme,
-          header: state.custom ? state.custom.header : null,
-          accent: state.custom ? state.custom.accent : null,
-          quote: state.keepsake || ''
-        };
-      }
-
-      function scheduleSave() {
-        if (!ticketToken) return;
-        clearTimeout(saveTimer);
-        flashSaveStatus('جاري الحفظ...', false);
-        saveTimer = setTimeout(async () => {
-          try {
-            await apiFetch('/api/pass/design', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ t: ticketToken, design: currentDesign() })
-            });
-            flashSaveStatus('تم الحفظ ✓', true);
-          } catch (err) {
-            flashSaveStatus('تعذّر الحفظ', false);
-          }
-        }, 700);
-      }
-
-      // DOM References
-      const displayEventTitle = document.getElementById('displayEventTitle');
-      const displayEventSubtitle = document.getElementById('displayEventSubtitle');
-      const displayDateTime = document.getElementById('displayDateTime');
-      const displayHolderName = document.getElementById('displayHolderName');
-      const displayLocation = document.getElementById('displayLocation');
-      const displaySeat = document.getElementById('displaySeat');
-      const displayKeepsake = document.getElementById('displayKeepsake');
-      const keepsakeWrapper = document.getElementById('keepsakeWrapper');
-      const displayFooterCode = document.getElementById('displayFooterCode');
-      const displayScanCode = document.getElementById('displayScanCode');
-      const displayBackEvent = document.getElementById('displayBackEvent');
-      const passFlip = document.getElementById('passFlip');
-      const passFlipInner = document.getElementById('passFlipInner');
-
-      const inputKeepsake = document.getElementById('inputKeepsake');
-      const colorHeader = document.getElementById('colorHeader');
-      const colorAccent = document.getElementById('colorAccent');
-
-      const qrContainer = document.getElementById('qrcode');
-      const qrLargeContainer = document.getElementById('qrcodeLarge');
-
-      // Generate exact mathematically spaced dots along the left semicircle of the TKT watermark seal
-      const sealDotsGroup = document.getElementById('tktSealDots');
-      if (sealDotsGroup) {
-        const cx = 114;
-        const cy = 110;
-        const radius = 99;
-        const totalDots = 19; // From -90deg (top) to +90deg (bottom)
-        for (let i = 0; i < totalDots; i++) {
-          const angleDeg = -90 + (180 / (totalDots - 1)) * i;
-          const angleRad = (angleDeg * Math.PI) / 180;
-          const x = (cx - Math.cos(angleRad) * radius).toFixed(2);
-          const y = (cy + Math.sin(angleRad) * radius).toFixed(2);
-          const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-          dot.setAttribute('cx', x);
-          dot.setAttribute('cy', y);
-          dot.setAttribute('r', '2.4');
-          sealDotsGroup.appendChild(dot);
-        }
-      }
-
-      // Apply Theme Colors (preset or guest-customized)
-      function applyTheme(themeKey) {
-        const t = getPalette(themeKey, state.custom);
-        state.theme = themeKey;
-        const root = document.documentElement;
-        root.style.setProperty('--pass-header', t.header);
-        root.style.setProperty('--pass-accent', t.accent);
-        root.style.setProperty('--pass-accent-dark', t.accentDark);
-        root.style.setProperty('--pass-accent-light', t.accentLight);
-        root.style.setProperty('--pass-body', t.body);
-        root.style.setProperty('--pass-footer', t.footer);
-
-        colorHeader.value = t.header;
-        colorAccent.value = t.accent;
-
-        document.querySelectorAll('.theme-swatch').forEach((btn) => {
-          const isSelected = !state.custom && btn.dataset.theme === themeKey;
-          btn.classList.toggle('border-2', isSelected);
-          btn.classList.toggle('border-[#161411]', isSelected);
-          btn.classList.toggle('scale-105', isSelected);
-          btn.classList.toggle('border', !isSelected);
-          btn.classList.toggle('border-[#D4CBB8]', !isSelected);
-        });
-      }
-
-      // Only the quote is editable; identity fields are shown read-only.
-      inputKeepsake.value = state.keepsake;
-
-      // Render QR Codes (Compact + Gate Zoom Modal)
-      function buildQrSvg(text, pixelSize) {
-        const qr = qrcode(0, 'M');
-        qr.addData(text);
-        qr.make();
-        const count = qr.getModuleCount();
-        const cellSize = Math.max(2, Math.floor(pixelSize / count));
-        return qr.createSvgTag({ cellSize: cellSize, margin: 0, scalable: true });
-      }
-
-      function renderQRCodes() {
-        const cleanId = (state.id || 'TKT-26001').trim();
-        const scanCode = (state.scanCode || '').trim();
-        // Gate scanners validate signed credential codes (or short codes). The
-        // reservation code stays visible on the pass but is never used for entry.
-        const qrPayload = scanCode || `TKT|${cleanId}|TKT|GA`;
-
-        qrContainer.innerHTML = buildQrSvg(qrPayload, 112);
-        const smallSvg = qrContainer.querySelector('svg');
-        if (smallSvg) {
-          smallSvg.setAttribute('width', '112');
-          smallSvg.setAttribute('height', '112');
-        }
-
-        qrLargeContainer.innerHTML = buildQrSvg(qrPayload, 210);
-        const largeSvg = qrLargeContainer.querySelector('svg');
-        if (largeSvg) {
-          largeSvg.setAttribute('width', '210');
-          largeSvg.setAttribute('height', '210');
-        }
-      }
-
-      // Two-sided flip: ReactBits-style smooth 3D turn, tap/keyboard friendly.
-      function setFlipped(flipped, immediate = false) {
-        if (immediate) passFlipInner.style.transition = 'none';
-        passFlip.classList.toggle('is-flipped', flipped);
-        passFlip.setAttribute('aria-flipped', flipped ? 'true' : 'false');
-        if (immediate) {
-          void passFlipInner.offsetWidth;
-          passFlipInner.style.transition = '';
-          return Promise.resolve();
-        }
-        return new Promise((resolve) => setTimeout(resolve, 780));
-      }
-
-      // Update Pass UI
-      function updatePassUI() {
-        displayEventTitle.textContent = state.event;
-        displayEventSubtitle.textContent = state.subtitle;
-        displayDateTime.textContent = state.dateTime;
-        displayHolderName.textContent = state.name || 'Guest';
-        displayLocation.textContent = state.location;
-        displaySeat.textContent = state.seat || 'General Admission';
-        displayBackEvent.textContent = state.event;
-        displayScanCode.textContent = state.scanCode || state.id || 'TKT-26001';
-        displayFooterCode.textContent = `${state.id || 'TKT-26001'} · SCAN AT ENTRY`;
-
-        if (state.keepsake && state.keepsake.trim()) {
-          keepsakeWrapper.classList.remove('hidden');
-          displayKeepsake.textContent = state.keepsake;
-        } else {
-          keepsakeWrapper.classList.add('hidden');
-        }
-
-        document.getElementById('modalHolderName').textContent = state.name || 'Guest';
-        document.getElementById('modalSeatInfo').textContent = state.seat || 'General Admission';
-        document.getElementById('modalTicketId').textContent = state.id || 'TKT-26001';
-
-        renderQRCodes();
-      }
-
-      // Initial render: local file preview works offline, hosted links require a signed token
-      async function init() {
-        if (isFilePreview) {
-          applyTheme(state.theme);
-          updatePassUI();
-          hideOverlay();
-          return;
-        }
-        if (!ticketToken) {
-          showOverlay('رابط غير صالح', 'هذا الرابط لا يحتوي على تذكرة. افتح الرابط الموجود في رسالة البريد.', true, '🔒');
-          return;
-        }
-
-        showOverlay('جاري تحميل تذكرتك...', '');
-        try {
-          const data = await apiFetch(`/api/pass?t=${encodeURIComponent(ticketToken)}`);
-          applyTicketData(data);
-          applyTheme(state.theme);
-          updatePassUI();
-          hideOverlay();
-        } catch (err) {
-          if (err.code === 'EXPIRED_LINK') {
-            showOverlay('انتهت صلاحية الرابط', 'اطلب تذكرة جديدة من المنظّم.', false, '⌛');
-          } else if (err.code === 'NOT_FOUND') {
-            showOverlay('التذكرة غير موجودة', 'تحقق من الرابط أو تواصل مع المنظّم.', false, '🔍');
-          } else if (err.code === 'INVALID_LINK') {
-            showOverlay('رابط غير صالح', 'لم نتمكن من التحقق من رابط التذكرة.', false, '🔒');
-          } else {
-            showOverlay('تعذّر تحميل التذكرة', 'تأكد من الاتصال بالإنترنت وحاول مرة أخرى.', true, '⚠️');
-          }
-        }
-      }
-
-      overlayActionBtn.addEventListener('click', () => {
-        hideOverlay();
-        init();
-      });
-
-      init();
-
-      // Theme Swatch Click Listeners — a preset clears any custom colors
-      document.querySelectorAll('.theme-swatch').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          state.custom = null;
-          applyTheme(btn.dataset.theme);
-          scheduleSave();
-        });
-      });
-
-      // Live customization: quote + colors only (identity stays locked)
-      inputKeepsake.addEventListener('input', (e) => {
-        state.keepsake = e.target.value;
-        updatePassUI();
-        scheduleSave();
-      });
-      colorHeader.addEventListener('input', (e) => {
-        state.custom = { header: e.target.value, accent: colorAccent.value };
-        applyTheme(state.theme);
-        scheduleSave();
-      });
-      colorAccent.addEventListener('input', (e) => {
-        state.custom = { header: colorHeader.value, accent: e.target.value };
-        applyTheme(state.theme);
-        scheduleSave();
-      });
-
-      // Compact edit dialog: only colors and the memory quote
-      const editModal = document.getElementById('editModal');
-
-      function openEditModal() {
-        inputKeepsake.value = state.keepsake;
-        applyTheme(state.theme);
-        editModal.classList.remove('hidden');
-        editModal.classList.add('flex');
-        document.body.style.overflow = 'hidden';
-      }
-
-      function closeEditModal() {
-        editModal.classList.add('hidden');
-        editModal.classList.remove('flex');
-        document.body.style.overflow = '';
-      }
-
-      document.getElementById('toggleCustomizeBtn').addEventListener('click', openEditModal);
-      document.getElementById('closeEditModalBtn').addEventListener('click', closeEditModal);
-      document.getElementById('doneEditBtn').addEventListener('click', closeEditModal);
-      editModal.addEventListener('click', (e) => {
-        if (e.target === editModal) closeEditModal();
-      });
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !editModal.classList.contains('hidden')) closeEditModal();
-      });
-
-      // Flip controls — nested buttons keep their own actions.
-      const toggleFlip = () => setFlipped(!passFlip.classList.contains('is-flipped'));
-      document.getElementById('flipCardBtn').addEventListener('click', toggleFlip);
-      document.getElementById('flipFrontBtn').addEventListener('click', () => setFlipped(true));
-      document.getElementById('flipBackBtn').addEventListener('click', () => setFlipped(false));
-      passFlip.addEventListener('click', (e) => {
-        if (e.target.closest('button')) return;
-        toggleFlip();
-      });
-      passFlip.addEventListener('keydown', (e) => {
-        if (e.target !== passFlip) return;
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          toggleFlip();
-        }
-      });
-
-      // Gate Scan Modal Controls
-      const qrModal = document.getElementById('qrModal');
-      document.getElementById('openQrModalBtn').addEventListener('click', () => {
-        qrModal.classList.remove('hidden');
-        qrModal.classList.add('flex');
-      });
-      document.getElementById('closeQrModalBtn').addEventListener('click', () => {
-        qrModal.classList.add('hidden');
-        qrModal.classList.remove('flex');
-      });
-      qrModal.addEventListener('click', (e) => {
-        if (e.target === qrModal) {
-          qrModal.classList.add('hidden');
-          qrModal.classList.remove('flex');
-        }
-      });
-
-      // Print / Save PDF — always print the front identity side.
-      document.getElementById('printPassBtn').addEventListener('click', async () => {
-        await setFlipped(false, true);
-        window.print();
-      });
-
-      // Static card element (used only for wallet PNG capture)
-      const passCard = document.getElementById('passCard');
-
-      // Download .ics Calendar Event
-      document.getElementById('downloadIcsBtn').addEventListener('click', () => {
-        const toIcsUtc = (value) => value ? new Date(value).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '') : '';
-        const startMs = state.startsAt ? new Date(state.startsAt).getTime() : Date.parse('2026-12-04T18:34:00Z');
-        const dtStart = toIcsUtc(state.startsAt) || '20261204T183400Z';
-        const dtEnd = toIcsUtc(state.endsAt) || toIcsUtc(new Date(startMs + 3 * 60 * 60 * 1000).toISOString());
-        const icsLines = [
-          'BEGIN:VCALENDAR',
-          'VERSION:2.0',
-          'PRODID:-//TKT//Event Pass//EN',
-          'BEGIN:VEVENT',
-          `UID:${state.id}@ticketak.vercel.app`,
-          `DTSTAMP:${toIcsUtc(new Date().toISOString())}`,
-          `DTSTART:${dtStart}`,
-          `DTEND:${dtEnd}`,
-          `SUMMARY:TKT — ${state.event}`,
-          `DESCRIPTION:Pass Holder: ${state.name} | Seat: ${state.seat} | Ticket ID: ${state.id}`,
-          'LOCATION:Wadi Degla Protectorate, Maadi, Cairo, Egypt',
-          'END:VEVENT',
-          'END:VCALENDAR'
-        ].join('\r\n');
-
-        const blob = new Blob([icsLines], { type: 'text/calendar;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `${state.id || 'TKT-Pass'}.ics`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      });
-
-      // =========================================================
-      // SAVE AS WALLET — export the exact pass as a wallet-style PNG
-      // =========================================================
-      const walletModal = document.getElementById('walletModal');
-      const walletPreviewImg = document.getElementById('walletPreviewImg');
-      const walletStatus = document.getElementById('walletStatus');
-      let walletBlob = null;
-      let walletFileName = 'TKT-Wallet-Pass.png';
-
-      function openWalletModal() {
-        walletModal.classList.remove('hidden');
-        walletModal.classList.add('flex');
-      }
-
-      function closeWalletModal() {
-        walletModal.classList.add('hidden');
-        walletModal.classList.remove('flex');
-        if (walletPreviewImg.src.startsWith('blob:')) {
-          URL.revokeObjectURL(walletPreviewImg.src);
-          walletPreviewImg.removeAttribute('src');
-        }
-      }
-
-      async function buildWalletCanvas() {
-        if (typeof html2canvas !== 'function') {
-          throw new Error('Wallet renderer could not load (offline?)');
-        }
-
-        if (document.fonts && document.fonts.ready) await document.fonts.ready;
-
-        return await html2canvas(passCard, {
-          scale: 2,
-          backgroundColor: '#E7E3D8',
-          useCORS: true,
-          logging: false,
-          scrollX: -window.scrollX,
-          scrollY: -window.scrollY
-        });
-      }
-
-      async function prepareWalletPass() {
-        openWalletModal();
-        walletStatus.textContent = 'جاري تجهيز بطاقة المحفظة...';
-        try {
-          await setFlipped(false, true);
-          const canvas = await buildWalletCanvas();
-          walletBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-          if (!walletBlob) throw new Error('PNG export failed');
-
-          walletFileName = `${(state.id || 'TKT-Pass').replace(/[^a-z0-9\-_]/gi, '-')}-wallet.png`;
-          walletPreviewImg.src = URL.createObjectURL(walletBlob);
-          walletStatus.textContent = 'جاهزة! نزّل الصورة أو شاركها لحفظها في المحفظة.';
-        } catch (err) {
-          console.error('Wallet export failed:', err);
-          walletStatus.textContent = 'تعذّر تجهيز البطاقة. تأكد من الاتصال بالإنترنت ثم حاول مرة أخرى.';
-        }
-      }
-
-      document.getElementById('saveWalletBtn').addEventListener('click', prepareWalletPass);
-      document.getElementById('closeWalletModalBtn').addEventListener('click', closeWalletModal);
-      walletModal.addEventListener('click', (e) => {
-        if (e.target === walletModal) closeWalletModal();
-      });
-
-      document.getElementById('downloadWalletBtn').addEventListener('click', () => {
-        if (!walletBlob) return;
-        const url = URL.createObjectURL(walletBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = walletFileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      });
-
-      document.getElementById('shareWalletBtn').addEventListener('click', async () => {
-        if (!walletBlob) return;
-        const file = new File([walletBlob], walletFileName, { type: 'image/png' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({ files: [file], title: 'TKT — Wallet Pass', text: 'تذكرتي لمغامرة وادي دجلة' });
-            return;
-          } catch (err) {
-            if (err && err.name === 'AbortError') return;
-          }
-        }
-        document.getElementById('downloadWalletBtn').click();
-      });
-    });
-  </script>
+  <script type="module" src="/assets/pass.js"></script>
 </body>
 </html>
