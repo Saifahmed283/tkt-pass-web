@@ -5,6 +5,9 @@
     { "source": "/pass", "destination": "/pass.html" },
     { "source": "/admin", "destination": "/admin.html" }
   ],
+  "redirects": [
+    { "source": "/", "destination": "/admin", "permanent": false }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",
