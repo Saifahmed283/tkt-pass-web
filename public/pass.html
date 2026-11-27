@@ -42,10 +42,38 @@
       --pass-footer: #EFECE4;
     }
 
-    /* Static pass card — no tilt, glare, or parallax motion */
+    /* Two-sided animated pass card (ReactBits-style flip) */
+    .pass-flip {
+      perspective: 1600px;
+    }
+    .pass-flip__inner {
+      display: grid;
+      transform-style: preserve-3d;
+      transition: transform 760ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .pass-flip.is-flipped .pass-flip__inner {
+      transform: rotateY(180deg);
+    }
+    .pass-flip__face {
+      grid-area: 1 / 1;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      transform: translateZ(0);
+    }
+    .pass-flip__back {
+      transform: rotateY(180deg) translateZ(0);
+    }
+    .pass-flip:focus-visible {
+      outline: 2px solid var(--pass-accent-dark);
+      outline-offset: 4px;
+      border-radius: 22px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .pass-flip__inner { transition-duration: 1ms; }
+    }
+
     #passCard {
       position: relative;
-      transform: none !important;
     }
 
     /* Solid accent text (html2canvas-safe) */
@@ -116,6 +144,19 @@
       .perforation-wrapper::after {
         background-color: #FFFFFF !important;
       }
+      .pass-flip {
+        perspective: none !important;
+      }
+      .pass-flip__inner {
+        display: block !important;
+        transform: none !important;
+      }
+      .pass-flip__face {
+        backface-visibility: visible !important;
+      }
+      .pass-flip__back {
+        display: none !important;
+      }
       .tkt-card-shadow {
         box-shadow: none !important;
         border: 1px solid #D4B475;
@@ -154,6 +195,14 @@
       <div class="flex items-center gap-3">
         <span id="saveStatus" class="hidden text-[10px] font-semibold text-emerald-700 font-arabic">تم الحفظ ✓</span>
         <button
+          id="flipCardBtn"
+          type="button"
+          class="text-xs font-semibold text-[#8A692E] hover:text-[#161411] transition-colors underline underline-offset-4 cursor-pointer font-arabic"
+          aria-label="Flip pass card"
+        >
+          اقلب التذكرة / Flip
+        </button>
+        <button
           id="toggleCustomizeBtn"
           type="button"
           class="text-xs font-semibold text-[#8A692E] hover:text-[#161411] transition-colors underline underline-offset-4 cursor-pointer"
@@ -164,10 +213,11 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- TKT DIGITAL EVENT PASS CARD (STATIC)                       -->
+    <!-- TKT DIGITAL EVENT PASS CARD (TWO-SIDED FLIP)               -->
     <!-- ========================================================= -->
-    <div>
-      <article id="passCard" class="w-full rounded-[22px] overflow-hidden tkt-card-shadow bg-[var(--pass-body)] border border-[var(--pass-accent)]/35 transition-colors duration-300">
+    <div id="passFlip" class="pass-flip" tabindex="0" role="button" aria-label="Flip pass card" aria-flipped="false">
+      <div id="passFlipInner" class="pass-flip__inner">
+        <article id="passCard" class="pass-flip__face w-full rounded-[22px] overflow-hidden tkt-card-shadow bg-[var(--pass-body)] border border-[var(--pass-accent)]/35 transition-colors duration-300">
 
         <!-- TOP HEADER SECTION -->
         <header id="passHeader" class="relative bg-[var(--pass-header)] text-white px-7 pt-7 pb-6 overflow-hidden transition-colors duration-300">
@@ -223,8 +273,7 @@
 
           <!-- Day · Time Row -->
           <div class="relative z-10 flex items-center justify-between text-[13.5px] font-normal text-white/95">
-            <span id="displayDateTime">Saturday, Dec 5 · 07:00 AM</span>
-            <span class="text-xs text-[var(--pass-accent)] font-arabic transition-colors duration-300">التجمع ٦:٣٠ ص</span>
+            <span id="displayDateTime">Friday, 4 December at 08:34 PM</span>
           </div>
         </header>
 
@@ -271,9 +320,29 @@
           </div>
         </section>
 
-        <!-- PERFORATED DASHED DIVIDER & WARM QR FOOTER -->
-        <footer id="passFooter" class="perforation-wrapper bg-[var(--pass-footer)] border-t-2 border-dashed border-[var(--pass-accent)] px-7 pt-5 pb-6 flex flex-col items-center text-center transition-colors duration-300">
-          <!-- Interactive Scannable QR Box -->
+        <!-- Subtle front-side flip affordance -->
+        <div class="no-print px-7 pb-6">
+          <button
+            id="flipFrontBtn"
+            type="button"
+            class="w-full rounded-xl border border-[var(--pass-accent)]/40 py-2.5 text-[11px] font-semibold text-[var(--pass-accent-dark)] font-arabic transition-colors hover:bg-[var(--pass-accent-light)] cursor-pointer"
+          >
+            اضغط لعرض رمز الدخول / Show entry QR
+          </button>
+        </div>
+      </article>
+
+      <!-- BACK FACE: QR + SCAN CODE -->
+      <article id="passBack" class="pass-flip__face pass-flip__back w-full rounded-[22px] overflow-hidden tkt-card-shadow bg-[var(--pass-body)] border border-[var(--pass-accent)]/35 transition-colors duration-300">
+        <div class="bg-[var(--pass-header)] text-white px-7 py-6 transition-colors duration-300">
+          <div class="flex items-center justify-between">
+            <span class="text-[22px] font-extrabold tracking-tight leading-none">TKT</span>
+            <span class="text-[10px] font-bold tracking-[0.16em] uppercase shiny-gold-text">ENTRY QR</span>
+          </div>
+          <p id="displayBackEvent" class="mt-3 text-[13px] font-semibold text-white/85 truncate">Wadi Degla Resrve | محمية وادي دجلة</p>
+        </div>
+
+        <div class="perforation-wrapper bg-[var(--pass-footer)] border-t-2 border-dashed border-[var(--pass-accent)] px-7 pt-7 pb-7 flex flex-col items-center text-center transition-colors duration-300">
           <button
             id="openQrModalBtn"
             type="button"
@@ -286,12 +355,21 @@
             </span>
           </button>
 
-          <!-- Ticket Reference Line (Exact Match to SVG Footer Text) -->
-          <p id="displayFooterCode" class="mt-4 text-[12px] font-medium tracking-[0.06em] uppercase text-[#6E685F]">
+          <p id="displayScanCode" class="mt-5 text-[14px] font-bold tracking-[0.16em] text-[var(--pass-accent-dark)] transition-colors duration-300">TKT-XXXXXX</p>
+          <p id="displayFooterCode" class="mt-1.5 text-[12px] font-medium tracking-[0.06em] uppercase text-[#6E685F]">
             TKT-26001 · SCAN AT ENTRY
           </p>
-        </footer>
+
+          <button
+            id="flipBackBtn"
+            type="button"
+            class="no-print mt-6 rounded-xl border border-[var(--pass-accent)]/40 px-5 py-2.5 text-[11px] font-semibold text-[var(--pass-accent-dark)] font-arabic transition-colors hover:bg-[var(--pass-accent-light)] cursor-pointer"
+          >
+            العودة للوجه الأمامي / Back to pass
+          </button>
+        </div>
       </article>
+      </div>
     </div>
 
     <!-- ========================================================= -->
@@ -643,7 +721,9 @@
         custom: null, // { header, accent } picked by the guest; null = use preset
         event: 'Wadi Degla Escape',
         subtitle: 'مغامرة محمية وادي دجلة · An Extraordinary Day',
-        dateTime: 'Saturday, Dec 5 · 07:00 AM',
+        dateTime: 'Friday, 4 December at 08:34 PM',
+        startsAt: '2026-12-04T18:34:00.000Z',
+        endsAt: null,
         name: 'Omar Khaled',
         location: 'Wadi Degla Protectorate · المعادي',
         seat: 'Bus 01 · Seat A4',
@@ -709,6 +789,8 @@
         state.event = t.eventTitle || state.event;
         state.subtitle = t.eventSubtitle || state.subtitle;
         state.dateTime = t.eventDate || state.dateTime;
+        state.startsAt = data.startsAt || state.startsAt;
+        state.endsAt = data.endsAt ?? state.endsAt;
         state.location = t.location || state.location;
 
         const d = data.design || {};
@@ -759,6 +841,10 @@
       const displayKeepsake = document.getElementById('displayKeepsake');
       const keepsakeWrapper = document.getElementById('keepsakeWrapper');
       const displayFooterCode = document.getElementById('displayFooterCode');
+      const displayScanCode = document.getElementById('displayScanCode');
+      const displayBackEvent = document.getElementById('displayBackEvent');
+      const passFlip = document.getElementById('passFlip');
+      const passFlipInner = document.getElementById('passFlipInner');
 
       const inputKeepsake = document.getElementById('inputKeepsake');
       const colorHeader = document.getElementById('colorHeader');
@@ -847,6 +933,19 @@
         }
       }
 
+      // Two-sided flip: ReactBits-style smooth 3D turn, tap/keyboard friendly.
+      function setFlipped(flipped, immediate = false) {
+        if (immediate) passFlipInner.style.transition = 'none';
+        passFlip.classList.toggle('is-flipped', flipped);
+        passFlip.setAttribute('aria-flipped', flipped ? 'true' : 'false');
+        if (immediate) {
+          void passFlipInner.offsetWidth;
+          passFlipInner.style.transition = '';
+          return Promise.resolve();
+        }
+        return new Promise((resolve) => setTimeout(resolve, 780));
+      }
+
       // Update Pass UI
       function updatePassUI() {
         displayEventTitle.textContent = state.event;
@@ -855,6 +954,8 @@
         displayHolderName.textContent = state.name || 'Guest';
         displayLocation.textContent = state.location;
         displaySeat.textContent = state.seat || 'General Admission';
+        displayBackEvent.textContent = state.event;
+        displayScanCode.textContent = state.scanCode || state.id || 'TKT-26001';
         displayFooterCode.textContent = `${state.id || 'TKT-26001'} · SCAN AT ENTRY`;
 
         if (state.keepsake && state.keepsake.trim()) {
@@ -964,6 +1065,23 @@
         if (e.key === 'Escape' && !editModal.classList.contains('hidden')) closeEditModal();
       });
 
+      // Flip controls — nested buttons keep their own actions.
+      const toggleFlip = () => setFlipped(!passFlip.classList.contains('is-flipped'));
+      document.getElementById('flipCardBtn').addEventListener('click', toggleFlip);
+      document.getElementById('flipFrontBtn').addEventListener('click', () => setFlipped(true));
+      document.getElementById('flipBackBtn').addEventListener('click', () => setFlipped(false));
+      passFlip.addEventListener('click', (e) => {
+        if (e.target.closest('button')) return;
+        toggleFlip();
+      });
+      passFlip.addEventListener('keydown', (e) => {
+        if (e.target !== passFlip) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleFlip();
+        }
+      });
+
       // Gate Scan Modal Controls
       const qrModal = document.getElementById('qrModal');
       document.getElementById('openQrModalBtn').addEventListener('click', () => {
@@ -981,8 +1099,9 @@
         }
       });
 
-      // Print / Save PDF
-      document.getElementById('printPassBtn').addEventListener('click', () => {
+      // Print / Save PDF — always print the front identity side.
+      document.getElementById('printPassBtn').addEventListener('click', async () => {
+        await setFlipped(false, true);
         window.print();
       });
 
@@ -991,15 +1110,19 @@
 
       // Download .ics Calendar Event
       document.getElementById('downloadIcsBtn').addEventListener('click', () => {
+        const toIcsUtc = (value) => value ? new Date(value).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '') : '';
+        const startMs = state.startsAt ? new Date(state.startsAt).getTime() : Date.parse('2026-12-04T18:34:00Z');
+        const dtStart = toIcsUtc(state.startsAt) || '20261204T183400Z';
+        const dtEnd = toIcsUtc(state.endsAt) || toIcsUtc(new Date(startMs + 3 * 60 * 60 * 1000).toISOString());
         const icsLines = [
           'BEGIN:VCALENDAR',
           'VERSION:2.0',
           'PRODID:-//TKT//Event Pass//EN',
           'BEGIN:VEVENT',
           `UID:${state.id}@ticketak.vercel.app`,
-          'DTSTAMP:20261127T000000Z',
-          'DTSTART:20261205T050000Z',
-          'DTEND:20261205T130000Z',
+          `DTSTAMP:${toIcsUtc(new Date().toISOString())}`,
+          `DTSTART:${dtStart}`,
+          `DTEND:${dtEnd}`,
           `SUMMARY:TKT — ${state.event}`,
           `DESCRIPTION:Pass Holder: ${state.name} | Seat: ${state.seat} | Ticket ID: ${state.id}`,
           'LOCATION:Wadi Degla Protectorate, Maadi, Cairo, Egypt',
@@ -1060,6 +1183,7 @@
         openWalletModal();
         walletStatus.textContent = 'جاري تجهيز بطاقة المحفظة...';
         try {
+          await setFlipped(false, true);
           const canvas = await buildWalletCanvas();
           walletBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
           if (!walletBlob) throw new Error('PNG export failed');
