@@ -169,13 +169,13 @@ function designFromApi(data) {
 }
 
 function currentDesign() {
-  const { theme, custom, quote } = store.get().design;
+  const { theme, custom, quote, graphic } = store.get().design;
   return {
     theme,
     header: custom ? custom.header : null,
     accent: custom ? custom.accent : null,
     quote: quote || '',
-    graphic: design.graphic || 'none',
+    graphic: graphic || 'none',
   };
 }
 
@@ -312,7 +312,8 @@ function renderDesign() {
     diagonal: `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44"><g fill="none" stroke="%23D4B475" stroke-width="1.4" opacity=".24"><path d="M-10 44L44-10M0 54L54 0M-20 34L34-20M10 64L64 10"/></g></svg>`,
   };
   const svg = patterns[graphic];
-  const image = svg ? `url("data:image/svg+xml,${svg}")` : 'none';
+  const accentHex = palette.accent.slice(1).toUpperCase();
+  const image = svg ? `url("data:image/svg+xml,${svg.replaceAll('%23D4B475', '%23' + accentHex)}")` : 'none';
   if (el.passHeader) el.passHeader.style.backgroundImage = image;
   if (el.passBody) el.passBody.style.backgroundImage = image;
   if (el.graphicSwatches) {
