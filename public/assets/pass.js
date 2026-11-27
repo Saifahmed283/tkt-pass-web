@@ -134,8 +134,25 @@ function getPalette(themeKey, custom) {
   };
 }
 
+const BUS_MEETING_POINT_URL = 'https://maps.app.goo.gl/JFMBNuEzgfewvNNRA';
+const BUS_MEETING_POINT_LABEL = 'نقطة الالتقاء بالباص';
+const PROGRAM_LOCATION_LABEL = 'Camp Abu Jaser';
+
+function isProgramPass(data, ticket) {
+  const candidates = [
+    ticket.passKind, ticket.pass_kind, ticket.passType, ticket.pass_type,
+    ticket.programType, ticket.program_type, ticket.eventType, ticket.event_type,
+    ticket.ticketType, ticket.ticket_type, ticket.category, ticket.type,
+    data.passKind, data.pass_kind, data.passType, data.pass_type,
+    data.programType, data.program_type, data.eventType, data.event_type,
+    data.event?.type, data.event?.category, data.event?.kind,
+  ];
+  return candidates.some((value) => /program/i.test(String(value || '').trim()));
+}
+
 function ticketFromApi(data) {
   const ticket = data.ticket || {};
+  const passKind = isProgramPass(data, ticket) ? 'program' : 'bus';
   return {
     id: ticket.id || PREVIEW.id,
     scanCode: ticket.scanCode || '',
@@ -146,8 +163,8 @@ function ticketFromApi(data) {
     dateTime: ticket.eventDate || PREVIEW.dateTime,
     startsAt: data.startsAt || PREVIEW.startsAt,
     endsAt: data.endsAt ?? null,
-    location: ticket.location || PREVIEW.location,
-    passKind: String(ticket.programType || ticket.program_type || ticket.eventType || ticket.event_type || ticket.type || data.event?.type || data.event?.category || '').trim().toUpperCase() === 'PROGRAM' ? 'program' : 'bus',
+    location: passKind === 'program' ? PROGRAM_LOCATION_LABEL : BUS_MEETING_POINT_LABEL,
+    passKind,
   };
 }
 
@@ -276,8 +293,10 @@ function renderTicket() {
   el.modalTicketId.textContent = data.id;
 
   if (el.mapsLink) {
-    const query = encodeURIComponent(data.location || 'Wadi Degla Protectorate, Cairo, Egypt');
-    el.mapsLink.href = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    const isBusPass = data.passKind !== 'program';
+    el.mapsLink.classList.toggle('hidden', !isBusPass);
+    el.mapsLink.href = BUS_MEETING_POINT_URL;
+    el.mapsLink.setAttribute('aria-label', isBusPass ? 'افتح نقطة الالتقاء بالباص على خرائط Google' : 'لا توجد نقطة التقاء لهذا الحجز');
   }
   renderQr();
 }
