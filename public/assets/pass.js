@@ -68,6 +68,9 @@ const el = {
   colorHeader: $('colorHeader'),
   colorAccent: $('colorAccent'),
   themeSwatches: $('themeSwatches'),
+  graphicSwatches: $('graphicSwatches'),
+  passHeader: $('passHeader'),
+  passBody: $('passBody'),
   modalHolderName: $('modalHolderName'),
   modalSeatInfo: $('modalSeatInfo'),
   modalTicketId: $('modalTicketId'),
@@ -161,6 +164,7 @@ function designFromApi(data) {
         }
       : null,
     quote: design.quote || '',
+    graphic: ['none', 'topographic', 'contours', 'grid', 'orbit', 'diagonal'].includes(design.graphic) ? design.graphic : 'none',
   };
 }
 
@@ -171,6 +175,7 @@ function currentDesign() {
     header: custom ? custom.header : null,
     accent: custom ? custom.accent : null,
     quote: quote || '',
+    graphic: design.graphic || 'none',
   };
 }
 
@@ -298,6 +303,29 @@ function renderDesign() {
   if (el.inputKeepsake && document.activeElement !== el.inputKeepsake) {
     el.inputKeepsake.value = design.quote || '';
   }
+  const graphic = design.graphic || 'none';
+  const patterns = {
+    topographic: `<svg xmlns="http://www.w3.org/2000/svg" width="260" height="180" viewBox="0 0 260 180"><g fill="none" stroke="%23D4B475" stroke-width="1.4" opacity=".30"><path d="M-20 42C35-8 78 2 108 36s72 47 172-8M-20 58C35 8 78 18 108 52s72 47 172-8M-20 74C35 24 78 34 108 68s72 47 172-8M-20 90C35 40 78 50 108 84s72 47 172-8M-20 106C35 56 78 66 108 100s72 47 172-8M-20 122C35 72 78 82 108 116s72 47 172-8"/></g></svg>`,
+    contours: `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="180" viewBox="0 0 220 180"><g fill="none" stroke="%23D4B475" stroke-width="1.5" opacity=".27"><path d="M-20 90C10 15 70 10 110 45s80 45 130-10M-20 100C10 25 70 20 110 55s80 45 130-10M-20 110C10 35 70 30 110 65s80 45 130-10M-20 120C10 45 70 40 110 75s80 45 130-10M-20 130C10 55 70 50 110 85s80 45 130-10"/></g></svg>`,
+    grid: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><g fill="none" stroke="%23D4B475" stroke-width="1" opacity=".22"><path d="M0 0H48V48H0zM24 0V48M0 24H48"/></g></svg>`,
+    orbit: `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="180" viewBox="0 0 220 180"><g fill="none" stroke="%23D4B475" stroke-width="1.5" opacity=".28"><ellipse cx="110" cy="90" rx="95" ry="38"/><ellipse cx="110" cy="90" rx="72" ry="58" transform="rotate(-28 110 90)"/><ellipse cx="110" cy="90" rx="42" ry="82" transform="rotate(34 110 90)"/></g></svg>`,
+    diagonal: `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44"><g fill="none" stroke="%23D4B475" stroke-width="1.4" opacity=".24"><path d="M-10 44L44-10M0 54L54 0M-20 34L34-20M10 64L64 10"/></g></svg>`,
+  };
+  const svg = patterns[graphic];
+  const image = svg ? `url("data:image/svg+xml,${svg}")` : 'none';
+  if (el.passHeader) el.passHeader.style.backgroundImage = image;
+  if (el.passBody) el.passBody.style.backgroundImage = image;
+  if (el.graphicSwatches) {
+    el.graphicSwatches.querySelectorAll('.graphic-swatch').forEach((button) => {
+      const selected = button.dataset.graphic === graphic;
+      button.classList.toggle('border-2', selected);
+      button.classList.toggle('border-[#161411]', selected);
+      button.classList.toggle('border', !selected);
+      button.classList.toggle('border-[#D4CBB8]', !selected);
+      button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+    });
+  }
+
   if (el.themeSwatches) {
     el.themeSwatches.querySelectorAll('.theme-swatch').forEach((button) => {
       const selected = !design.custom && button.dataset.theme === design.theme;
@@ -591,6 +619,10 @@ bindAction($('shareWalletBtn'), shareWallet, {
 
 delegateAction(el.themeSwatches, '.theme-swatch', (_event, button) => {
   updateDesign({ theme: button.dataset.theme, custom: null });
+});
+
+delegateAction(el.graphicSwatches, '.graphic-swatch', (_event, button) => {
+  updateDesign({ graphic: button.dataset.graphic });
 });
 
 el.passFlip.addEventListener('click', (event) => {
