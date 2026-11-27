@@ -1,0 +1,3 @@
+ticket_id,holder_name,email,seat,event_title,event_subtitle,location,event_date,starts_at,ends_at
+TKT-26001,Omar Khaled,omar@example.com,Bus 01 · Seat A4,Wadi Degla Escape,مغامرة محمية وادي دجلة · An Extraordinary Day,Wadi Degla Protectorate · المعادي,Saturday Dec 5 · 07:00 AM,2026-12-05T07:00:00+02:00,2026-12-05T17:00:00+02:00
+TKT-26002,Salma Ahmed,salma@example.com,Bus 02 · Seat B7,Wadi Degla Escape,مغامرة محمية وادي دجلة · An Extraordinary Day,Wadi Degla Protectorate · المعادي,Saturday Dec 5 · 07:00 AM,2026-12-05T07:00:00+02:00,2026-12-05T17:00:00+02:00

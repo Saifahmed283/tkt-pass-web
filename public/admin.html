@@ -1,0 +1,1021 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#161411" />
+  <title>TKT-PASS — لوحة المنظمين</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: '#E7E3D8',
+            paper: '#F7F5F0',
+            ink: '#161411',
+            gold: '#D4B475'
+          },
+          fontFamily: {
+            sans: ['Cairo', 'Poppins', 'sans-serif'],
+            display: ['Poppins', 'Cairo', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    html, body { font-family: 'Cairo', 'Poppins', sans-serif; }
+    body {
+      background-color: #E7E3D8;
+      background-image:
+        radial-gradient(1100px 600px at 85% -10%, rgba(212,180,117,.20), transparent 60%),
+        radial-gradient(900px 500px at 0% 100%, rgba(22,20,17,.07), transparent 60%);
+      background-attachment: fixed;
+    }
+    .tkt-card {
+      background: #F7F5F0;
+      border: 1px solid rgba(22,20,17,.09);
+      box-shadow: 0 18px 42px -28px rgba(22,20,17,.55), 0 2px 8px -4px rgba(22,20,17,.18);
+    }
+    .tkt-input {
+      width: 100%;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(22,20,17,.16);
+      background: #fff;
+      color: #161411;
+      padding: 0.625rem 0.875rem;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease;
+    }
+    .tkt-input:focus {
+      border-color: #D4B475;
+      box-shadow: 0 0 0 3px rgba(212,180,117,.22);
+    }
+    .tkt-input::placeholder { color: rgba(22,20,17,.38); }
+    .tkt-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      border-radius: 0.75rem;
+      padding: .55rem .9rem;
+      font-size: .8rem;
+      font-weight: 600;
+      line-height: 1.25;
+      transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease, opacity .15s ease;
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+    .tkt-btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .tkt-btn:active:not(:disabled) { transform: translateY(0); }
+    .tkt-btn:disabled { opacity: .55; cursor: not-allowed; }
+    .tkt-btn-ink { background: #161411; color: #F7F5F0; }
+    .tkt-btn-ink:hover:not(:disabled) { box-shadow: 0 10px 20px -12px rgba(22,20,17,.8); }
+    .tkt-btn-gold { background: #D4B475; color: #161411; }
+    .tkt-btn-gold:hover:not(:disabled) { box-shadow: 0 10px 20px -12px rgba(212,180,117,.95); }
+    .tkt-btn-ghost { background: transparent; color: #161411; border-color: rgba(22,20,17,.18); }
+    .tkt-btn-ghost:hover:not(:disabled) { background: rgba(22,20,17,.05); }
+    .tkt-btn-danger { background: transparent; color: #9f2d20; border-color: rgba(159,45,32,.25); }
+    .tkt-btn-danger:hover:not(:disabled) { background: rgba(159,45,32,.07); }
+    .spin {
+      display: inline-block;
+      width: 1rem; height: 1rem;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 9999px;
+      animation: tkt-spin .7s linear infinite;
+      flex: none;
+    }
+    @keyframes tkt-spin { to { transform: rotate(360deg); } }
+    .ltr { direction: ltr; unicode-bidi: isolate; }
+    [hidden] { display: none !important; }
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 50;
+      display: flex; align-items: center; justify-content: center;
+      padding: 1rem;
+      background: rgba(22,20,17,.55);
+      backdrop-filter: blur(4px);
+    }
+    .modal-panel {
+      max-height: calc(100vh - 2rem);
+      overflow-y: auto;
+      width: 100%;
+    }
+    th { white-space: nowrap; }
+    tbody tr { transition: background-color .15s ease; }
+    tbody tr:hover { background: rgba(212,180,117,.09); }
+    .toast-item {
+      animation: tkt-in .2s ease-out;
+    }
+    @keyframes tkt-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: rgba(22,20,17,.22); border-radius: 9999px; border: 2px solid transparent; background-clip: padding-box; }
+    ::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</head>
+<body class="min-h-screen text-ink antialiased selection:bg-gold/40">
+
+  <!-- ============ LOGIN ============ -->
+  <div id="loginView" class="min-h-screen flex items-center justify-center px-4 py-10">
+    <div class="tkt-card w-full max-w-md rounded-3xl p-7 sm:p-9">
+      <div class="flex items-center gap-3 mb-7">
+        <div class="h-12 w-12 rounded-2xl bg-ink text-paper font-display font-bold flex items-center justify-center text-sm tracking-wider">TKT</div>
+        <div>
+          <p class="text-lg font-bold leading-tight">TKT-PASS</p>
+          <p class="text-xs text-ink/50 font-display">Organizer dashboard</p>
+        </div>
+      </div>
+
+      <h1 class="text-2xl font-bold mb-1">تسجيل الدخول</h1>
+      <p class="text-sm text-ink/55 mb-6">أدخل كلمة مرور المنظم للوصول إلى لوحة التحكم.</p>
+
+      <form id="loginForm" novalidate>
+        <label for="passwordInput" class="block text-sm font-semibold mb-2">كلمة المرور <span class="text-ink/40 text-xs font-normal font-display">Password</span></label>
+        <div class="relative">
+          <input id="passwordInput" type="password" autocomplete="current-password" class="tkt-input pl-12" placeholder="••••••••" required />
+          <button type="button" id="togglePassword" class="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-ink/50 hover:text-ink px-2 py-1" aria-label="Show password">إظهار</button>
+        </div>
+        <p id="loginError" class="text-xs text-red-700 mt-3" hidden></p>
+        <button id="loginBtn" type="submit" class="tkt-btn tkt-btn-ink w-full mt-5 py-3">
+          <span class="spin" id="loginSpinner" hidden></span>
+          <span>دخول <span class="font-display text-[10px] opacity-60 block">Sign in</span></span>
+        </button>
+      </form>
+      <p class="text-[11px] text-ink/40 mt-6 text-center font-display">Secure organizer access · Session cookie only</p>
+    </div>
+  </div>
+
+  <!-- ============ APP ============ -->
+  <div id="appView" hidden>
+    <header class="sticky top-0 z-30 border-b border-ink/10 bg-paper/85 backdrop-blur">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="h-10 w-10 rounded-xl bg-ink text-paper font-display font-bold flex items-center justify-center text-[11px] tracking-wider shrink-0">TKT</div>
+          <div class="min-w-0">
+            <p class="font-bold leading-tight text-sm sm:text-base">TKT-PASS <span class="text-ink/40 text-xs font-normal">/ لوحة المنظمين</span></p>
+            <p id="eventNameLabel" class="text-[11px] text-ink/50 truncate">فعالية TKT-PASS · TKT Event</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="authBadge" class="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-gold/20 border border-gold/40 px-3 py-1 text-[11px] font-semibold">
+            <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span> متصل
+          </span>
+          <button id="logoutBtn" class="tkt-btn tkt-btn-ghost">
+            <span>خروج</span><span class="font-display text-[10px] opacity-50 hidden sm:block">Logout</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+      <!-- global error -->
+      <div id="globalError" class="rounded-2xl border border-red-300 bg-red-50 px-4 py-3 flex items-start gap-3" hidden>
+        <span class="text-red-700 text-lg leading-none">!</span>
+        <div class="flex-1">
+          <p class="text-xs font-bold text-red-800">تعذّر تحميل البيانات</p>
+          <p id="globalErrorText" class="text-xs text-red-700 mt-0.5"></p>
+        </div>
+        <button id="retryBtn" class="text-xs font-bold text-red-800 underline">إعادة المحاولة</button>
+      </div>
+
+      <!-- stats -->
+      <section aria-label="الإحصائيات" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="tkt-card rounded-2xl p-4 sm:p-5">
+          <p class="text-[11px] font-semibold text-ink/55">إجمالي التذاكر <span class="block font-display font-normal text-[9px] text-ink/35">Total tickets</span></p>
+          <p id="statTotal" class="font-display text-2xl sm:text-3xl font-semibold mt-3">—</p>
+        </div>
+        <div class="tkt-card rounded-2xl p-4 sm:p-5">
+          <p class="text-[11px] font-semibold text-ink/55">المُرسَلة <span class="block font-display font-normal text-[9px] text-ink/35">Sent</span></p>
+          <p id="statSent" class="font-display text-2xl sm:text-3xl font-semibold mt-3 text-ink">—</p>
+        </div>
+        <div class="tkt-card rounded-2xl p-4 sm:p-5">
+          <p class="text-[11px] font-semibold text-ink/55">المفتوحة <span class="block font-display font-normal text-[9px] text-ink/35">Opened</span></p>
+          <p id="statOpened" class="font-display text-2xl sm:text-3xl font-semibold mt-3 text-ink">—</p>
+        </div>
+        <div class="tkt-card rounded-2xl p-4 sm:p-5">
+          <p class="text-[11px] font-semibold text-ink/55">المُخصّصة <span class="block font-display font-normal text-[9px] text-ink/35">Customized</span></p>
+          <p id="statCustomized" class="font-display text-2xl sm:text-3xl font-semibold mt-3 text-ink">—</p>
+        </div>
+      </section>
+
+      <!-- tickets -->
+      <section class="tkt-card rounded-3xl overflow-hidden">
+        <div class="px-4 sm:px-6 py-5 border-b border-ink/10">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 class="text-lg font-bold">تذاكر <span class="text-ink/40 text-xs font-normal font-display">Tickets</span></h2>
+              <p id="ticketCount" class="text-[11px] text-ink/50 mt-0.5">—</p>
+            </div>
+            <span id="tableSpinner" class="spin text-gold" hidden></span>
+          </div>
+
+          <div class="flex flex-wrap gap-2 items-center">
+            <div class="relative flex-1 min-w-[190px]">
+              <input id="searchInput" type="search" class="tkt-input pr-9" placeholder="بحث بالاسم، البريد، المعرّف أو المقعد" aria-label="Search tickets" />
+              <svg class="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink/35 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            </div>
+            <button id="newTicketBtn" class="tkt-btn tkt-btn-ink"><span>إضافة تذكرة</span><span class="font-display text-[9px] opacity-60 hidden sm:block">New ticket</span></button>
+            <button id="importBtn" class="tkt-btn tkt-btn-ghost"><span>استيراد CSV</span><span class="font-display text-[9px] opacity-50 hidden sm:block">Import</span></button>
+            <button id="sendAllBtn" class="tkt-btn tkt-btn-gold" title="إرسال التذاكر غير المرسلة فقط"><span class="spin" id="sendAllSpinner" hidden></span><span>إرسال المتبقي</span><span class="font-display text-[9px] opacity-60 hidden sm:block">Send remaining</span></button>
+            <button id="refreshBtn" class="tkt-btn tkt-btn-ghost" aria-label="Refresh"><span>تحديث</span><span class="font-display text-[9px] opacity-50 hidden sm:block">Refresh</span></button>
+          </div>
+
+          <div id="selectionBar" class="mt-3 rounded-xl bg-gold/15 border border-gold/35 px-3 py-2 flex items-center justify-between gap-3" hidden>
+            <p id="selectionText" class="text-xs font-semibold"></p>
+            <div class="flex gap-2">
+              <button id="clearSelectionBtn" class="tkt-btn tkt-btn-ghost py-1.5 px-3 text-xs">إلغاء التحديد</button>
+              <button id="sendSelectedBtn" class="tkt-btn tkt-btn-ink py-1.5 px-3 text-xs"><span id="sendSelectedSpinner" class="spin" hidden></span>إرسال المحدد</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[1080px] text-xs">
+            <thead class="bg-ink/[.04] text-ink/60">
+              <tr>
+                <th class="px-3 py-3 text-right w-10"><input id="selectAll" type="checkbox" class="h-4 w-4 accent-[#161411] cursor-pointer" aria-label="Select all" /></th>
+                <th class="px-3 py-3 text-right">المعرّف <span class="font-display font-normal text-[9px] opacity-60">ID</span></th>
+                <th class="px-3 py-3 text-right">الاسم <span class="font-display font-normal text-[9px] opacity-60">Name</span></th>
+                <th class="px-3 py-3 text-right">البريد <span class="font-display font-normal text-[9px] opacity-60">Email</span></th>
+                <th class="px-3 py-3 text-right">المقعد <span class="font-display font-normal text-[9px] opacity-60">Seat</span></th>
+                <th class="px-3 py-3 text-right">الحالة <span class="font-display font-normal text-[9px] opacity-60">Status</span></th>
+                <th class="px-3 py-3 text-right">التصميم <span class="font-display font-normal text-[9px] opacity-60">Design</span></th>
+                <th class="px-3 py-3 text-right">الإرسال <span class="font-display font-normal text-[9px] opacity-60">Sent</span></th>
+                <th class="px-3 py-3 text-right">الفتح <span class="font-display font-normal text-[9px] opacity-60">Opened</span></th>
+                <th class="px-3 py-3 text-right">إجراءات <span class="font-display font-normal text-[9px] opacity-60">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody id="ticketsBody" class="divide-y divide-ink/[.07]"></tbody>
+          </table>
+        </div>
+
+        <div id="emptyState" class="px-6 py-16 text-center" hidden>
+          <div class="mx-auto h-12 w-12 rounded-2xl bg-gold/20 flex items-center justify-center mb-3 text-xl">✦</div>
+          <p class="font-bold text-sm">لا توجد تذاكر مطابقة</p>
+          <p class="text-xs text-ink/50 mt-1">أضف تذكرة جديدة أو استيراد ملف CSV للبدء.</p>
+        </div>
+        <div id="loadingState" class="px-6 py-16 text-center" hidden>
+          <span class="spin text-gold mx-auto"></span>
+          <p class="text-xs text-ink/50 mt-3">جارٍ تحميل التذاكر…</p>
+        </div>
+        <div class="px-4 sm:px-6 py-3 border-t border-ink/10 flex items-center justify-between text-[11px] text-ink/50">
+          <span id="tableFooter">—</span>
+          <span class="font-display">TKT-PASS · Organizer suite</span>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ============ TICKET MODAL ============ -->
+  <div id="ticketModal" class="modal-backdrop" hidden>
+    <div class="modal-panel tkt-card rounded-3xl max-w-3xl">
+      <form id="ticketForm" novalidate>
+        <div class="px-5 sm:px-7 py-5 border-b border-ink/10 flex items-start justify-between gap-4">
+          <div>
+            <h3 id="ticketModalTitle" class="text-lg font-bold">إضافة تذكرة <span class="font-display text-xs font-normal text-ink/40">New ticket</span></h3>
+            <p class="text-[11px] text-ink/50 mt-0.5">بيانات حامل التذكرة والفعالية.</p>
+          </div>
+          <button type="button" class="close-modal text-ink/45 hover:text-ink text-xl leading-none" data-close="ticketModal" aria-label="Close">×</button>
+        </div>
+
+        <div class="px-5 sm:px-7 py-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <label class="block">
+            <span class="block text-xs font-semibold mb-1">معرّف التذكرة <span class="font-display font-normal text-[9px] text-ink/40">id · optional</span></span>
+            <input name="id" id="f_id" class="tkt-input ltr" placeholder="TKT-001" />
+          </label>
+          <label class="block">
+            <span class="block text-xs font-semibold mb-1">البريد الإلكتروني <span class="font-display font-normal text-[9px] text-ink/40">email *</span></span>
+            <input name="email" id="f_email" type="email" class="tkt-input ltr" placeholder="guest@example.com" required />
+          </label>
+          <label class="block">
+            <span class="block text-xs font-semibold mb-1">اسم الحامل <span class="font-display font-normal text-[9px] text-ink/40">holder_name *</span></span>
+            <input name="holder_name" id="f_name" class="tkt-input" placeholder="اسم الحامل" required />
+          </label>
+          <label class="block">
+            <span class="block text-xs font-semibold mb-1">المقعد <span class="font-display font-normal text-[9px] text-ink/40">seat *</span></span>
+            <input name="seat" id="f_seat" class="tkt-input ltr" placeholder="A-12" required />
+          </label>
+          <label class="block">
+            <span class="block text-xs font-semibold mb-1">عنوان الفعالية <span class="font-display font-normal text-[9px] text-ink/40">event_title *</span></span>
+            <input name="event_title" id="f_event_title" class="tkt-input" placeholder="اسم الفعالية" required />
+          </label>
+          <label class="block">
+            <span class="block text-xs font-semibold mb-1">العنوان الفرعي <span class="font-display font-normal text-[9px] text-ink/40">event_subtitle</span></span>
+            <input name="event_subtitle" id="f_event_subtitle" class="tkt-input" placeholder="وصف مختصر" />
+          </label>
+          <label class="block">
+            <span class="block text-xs font-semibold mb-1">الموقع <span class="font-display font-normal text-[9px] text-ink/40">location *</span></span>
+            <input name="location" id="f_location" class="tkt-input" placeholder="مكان الفعالية" required />
+          </label>
+          <label class="block">
+            <span class="block text-xs font-semibold mb-1">تاريخ الفعالية <span class="font-display font-normal text-[9px] text-ink/40">event_date *</span></span>
+            <input name="event_date" id="f_event_date" class="tkt-input ltr" placeholder="2026-12-20" required />
+          </label>
+          <label class="block">
+            <span class="block text-xs font-semibold mb-1">وقت البداية <span class="font-display font-normal text-[9px] text-ink/40">starts_at</span></span>
+            <input name="starts_at" id="f_starts_at" class="tkt-input ltr" placeholder="18:00 أو ISO" />
+          </label>
+          <label class="block">
+            <span class="block text-xs font-semibold mb-1">وقت النهاية <span class="font-display font-normal text-[9px] text-ink/40">ends_at</span></span>
+            <input name="ends_at" id="f_ends_at" class="tkt-input ltr" placeholder="22:00 أو ISO" />
+          </label>
+        </div>
+
+        <div class="px-5 sm:px-7 pb-5">
+          <p id="ticketError" class="text-xs text-red-700 mb-3" hidden></p>
+          <div class="flex items-center justify-end gap-2 border-t border-ink/10 pt-4">
+            <button type="button" class="tkt-btn tkt-btn-ghost close-modal" data-close="ticketModal">إلغاء</button>
+            <button type="submit" id="saveTicketBtn" class="tkt-btn tkt-btn-ink min-w-[120px]">
+              <span class="spin" id="saveSpinner" hidden></span><span>حفظ <span class="font-display text-[9px] opacity-60 block">Save</span></span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ IMPORT MODAL ============ -->
+  <div id="importModal" class="modal-backdrop" hidden>
+    <div class="modal-panel tkt-card rounded-3xl max-w-2xl">
+      <div class="px-5 sm:px-7 py-5 border-b border-ink/10 flex items-start justify-between gap-4">
+        <div>
+          <h3 class="text-lg font-bold">استيراد CSV <span class="font-display text-xs font-normal text-ink/40">Import CSV</span></h3>
+          <p class="text-[11px] text-ink/50 mt-0.5">ارفع ملفًا أو الصق محتواه مباشرة.</p>
+        </div>
+        <button type="button" class="close-modal text-ink/45 hover:text-ink text-xl leading-none" data-close="importModal" aria-label="Close">×</button>
+      </div>
+      <div class="px-5 sm:px-7 py-5 space-y-4">
+        <div>
+          <label for="csvFile" class="block text-xs font-semibold mb-2">ملف CSV / TXT <span class="font-display font-normal text-[9px] text-ink/40">Choose file</span></label>
+          <input id="csvFile" type="file" accept=".csv,.txt,text/csv,text/plain" class="tkt-input text-xs" />
+        </div>
+        <div>
+          <label for="csvText" class="block text-xs font-semibold mb-2">محتوى الملف <span class="font-display font-normal text-[9px] text-ink/40">Raw CSV preview</span></label>
+          <textarea id="csvText" rows="8" class="tkt-input ltr font-display text-xs leading-relaxed" placeholder="ticket_id,holder_name,email,seat,..."></textarea>
+        </div>
+        <div class="rounded-xl bg-gold/10 border border-gold/30 px-3 py-2.5">
+          <p class="text-[11px] font-semibold">الترويسة المتوقعة <span class="font-display font-normal text-[9px] text-ink/40">Expected header</span></p>
+          <code class="block ltr text-[10px] text-ink/65 mt-1.5 break-all">ticket_id,holder_name,email,seat,event_title,event_subtitle,location,event_date,starts_at,ends_at</code>
+        </div>
+        <p id="importError" class="text-xs text-red-700" hidden></p>
+
+        <div id="importResults" class="rounded-xl border border-ink/10 bg-white/70 p-3" hidden>
+          <div class="flex gap-3 text-xs font-semibold">
+            <span>المُستوردة: <b id="importedCount" class="font-display">0</b></span>
+            <span>المتخطّاة: <b id="skippedCount" class="font-display">0</b></span>
+          </div>
+          <ul id="importErrors" class="mt-2 space-y-1 text-[11px] text-red-700 max-h-32 overflow-y-auto"></ul>
+        </div>
+      </div>
+      <div class="px-5 sm:px-7 pb-5 flex items-center justify-end gap-2 border-t border-ink/10 pt-4">
+        <button type="button" class="tkt-btn tkt-btn-ghost close-modal" data-close="importModal">إغلاق</button>
+        <button id="runImportBtn" type="button" class="tkt-btn tkt-btn-gold min-w-[120px]">
+          <span class="spin" id="importSpinner" hidden></span><span>استيراد</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SEND RESULTS MODAL ============ -->
+  <div id="sendModal" class="modal-backdrop" hidden>
+    <div class="modal-panel tkt-card rounded-3xl max-w-lg">
+      <div class="px-5 sm:px-7 py-5 border-b border-ink/10 flex items-start justify-between gap-4">
+        <div>
+          <h3 class="text-lg font-bold">نتيجة الإرسال <span class="font-display text-xs font-normal text-ink/40">Send results</span></h3>
+          <p id="sendSummary" class="text-[11px] text-ink/50 mt-0.5"></p>
+        </div>
+        <button type="button" class="close-modal text-ink/45 hover:text-ink text-xl leading-none" data-close="sendModal" aria-label="Close">×</button>
+      </div>
+      <div class="px-5 sm:px-7 py-5">
+        <ul id="sendList" class="space-y-2 max-h-[50vh] overflow-y-auto text-xs"></ul>
+      </div>
+      <div class="px-5 sm:px-7 pb-5 flex justify-end border-t border-ink/10 pt-4">
+        <button type="button" class="tkt-btn tkt-btn-ink close-modal" data-close="sendModal">تم</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="fixed bottom-4 left-4 z-[60] space-y-2 w-full max-w-sm pointer-events-none"></div>
+
+  <script>
+    'use strict';
+
+    /* ---------------- helpers ---------------- */
+    var $ = function (id) { return document.getElementById(id); };
+
+    var ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    function esc(value) {
+      return String(value === null || value === undefined ? '' : value).replace(/[&<>"']/g, function (c) { return ESCAPES[c]; });
+    }
+
+    function pick(obj, camel, snake) {
+      if (!obj) return '';
+      var v = obj[camel];
+      if (v === undefined || v === null || v === '') v = obj[snake];
+      return v === undefined || v === null ? '' : v;
+    }
+
+    function fmtDate(value) {
+      if (!value) return '—';
+      var d = new Date(value);
+      if (isNaN(d.getTime())) return esc(value);
+      try {
+        return new Intl.DateTimeFormat('en-GB', {
+          year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit'
+        }).format(d);
+      } catch (e) { return esc(String(value)); }
+    }
+
+    function setSpinner(id, visible) { var el = $(id); if (el) el.hidden = !visible; }
+
+    function toast(message, kind) {
+      var colors = { ok: 'bg-emerald-800 text-white', error: 'bg-red-800 text-white', info: 'bg-ink text-paper' };
+      var el = document.createElement('div');
+      el.className = 'toast-item pointer-events-auto rounded-xl px-4 py-3 text-xs font-semibold shadow-lg ' + (colors[kind] || colors.info);
+      el.textContent = message;
+      $('toastContainer').appendChild(el);
+      window.setTimeout(function () {
+        el.style.transition = 'opacity .3s ease, transform .3s ease';
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(8px)';
+        window.setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 320);
+      }, 4500);
+    }
+
+    function openModal(id) { $(id).hidden = false; document.body.style.overflow = 'hidden'; }
+    function closeModal(id) {
+      $(id).hidden = true;
+      var anyOpen = ['ticketModal', 'importModal', 'sendModal'].some(function (m) { return !$(m).hidden; });
+      if (!anyOpen) document.body.style.overflow = '';
+    }
+
+    /* ---------------- API ---------------- */
+    async function api(path, options) {
+      var opts = options || {};
+      var skipAuthRedirect = !!opts.skipAuthRedirect;
+      delete opts.skipAuthRedirect;
+      var headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+      var response;
+      try {
+        response = await fetch(path, Object.assign({ credentials: 'same-origin', headers: headers }, opts));
+      } catch (networkError) {
+        var netErr = new Error('تعذّر الاتصال بالخادم. تحقق من اتصال الشبكة وحاول مرة أخرى.');
+        netErr.code = 'NETWORK_ERROR';
+        throw netErr;
+      }
+
+      var data = null;
+      var raw = await response.text();
+      if (raw) { try { data = JSON.parse(raw); } catch (e) { data = null; } }
+
+      if (!response.ok) {
+        var message = (data && (data.error || data.message || data.detail)) || ('طلب غير ناجح (' + response.status + ')');
+        if (typeof message !== 'string') message = JSON.stringify(message);
+        var err = new Error(message);
+        err.status = response.status;
+        err.code = (data && (data.code || data.errorCode)) || ('HTTP_' + response.status);
+        if (response.status === 401 && !skipAuthRedirect) forceLogin('انتهت الجلسة أو غير مصرّح بالوصول. سجّل الدخول مرة أخرى.');
+        throw err;
+      }
+      return data || {};
+    }
+
+    /* ---------------- state ---------------- */
+    var state = { authenticated: false, tickets: [], stats: null, selection: new Set(), search: '', busy: false };
+
+    function showLogin(message) {
+      state.authenticated = false;
+      $('appView').hidden = true;
+      $('loginView').hidden = false;
+      $('passwordInput').value = '';
+      $('loginError').textContent = message || '';
+      $('loginError').hidden = !message;
+      setSpinner('loginSpinner', false);
+      $('loginBtn').disabled = false;
+      window.setTimeout(function () { try { $('passwordInput').focus(); } catch (e) {} }, 30);
+    }
+
+    function forceLogin(message) {
+      state.tickets = [];
+      state.selection.clear();
+      showLogin(message);
+    }
+
+    function showApp() {
+      $('loginView').hidden = true;
+      $('appView').hidden = false;
+      state.authenticated = true;
+    }
+
+    function showGlobalError(err) {
+      $('globalErrorText').textContent = (err && err.code ? err.code + ' — ' : '') + (err && err.message ? err.message : 'خطأ غير معروف');
+      $('globalError').hidden = false;
+    }
+
+    /* ---------------- rendering ---------------- */
+    function renderStats() {
+      var s = state.stats || {};
+      $('statTotal').textContent = s.total !== undefined ? String(s.total) : '—';
+      $('statSent').textContent = s.sent !== undefined ? String(s.sent) : '—';
+      $('statOpened').textContent = s.opened !== undefined ? String(s.opened) : '—';
+      $('statCustomized').textContent = s.customized !== undefined ? String(s.customized) : '—';
+    }
+
+    function statusBadge(status) {
+      var s = String(status || '').toLowerCase();
+      var cls = 'bg-ink/5 text-ink/60 border-ink/10';
+      var label = status || '—';
+      if (/open|view|scan/.test(s)) { cls = 'bg-emerald-50 text-emerald-800 border-emerald-200'; label = 'مفتوحة'; }
+      else if (/sent|deliver/.test(s)) { cls = 'bg-sky-50 text-sky-800 border-sky-200'; label = 'مُرسَلة'; }
+      else if (/fail|error|bounce/.test(s)) { cls = 'bg-red-50 text-red-800 border-red-200'; label = 'فشل'; }
+      else if (/draft|pending|new/.test(s)) { cls = 'bg-gold/20 text-ink border-gold/40'; label = 'قيد الانتظار'; }
+      else if (/used|check/.test(s)) { cls = 'bg-violet-50 text-violet-800 border-violet-200'; label = 'مستخدمة'; }
+      return '<span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ' + cls + '">' + esc(label) + '</span>';
+    }
+
+    function designBadge(design) {
+      var d = design || 'classic';
+      var label = String(d).charAt(0).toUpperCase() + String(d).slice(1);
+      return '<span class="inline-flex items-center gap-1 rounded-full bg-ink/5 border border-ink/10 px-2 py-0.5 text-[10px]"><span class="h-2 w-2 rounded-full bg-gold"></span>' + esc(label) + '</span>';
+    }
+
+    function filteredTickets() {
+      var q = state.search.trim().toLowerCase();
+      if (!q) return state.tickets;
+      return state.tickets.filter(function (t) {
+        return [pick(t, 'id', 'ticket_id'), pick(t, 'name', 'holder_name'), pick(t, 'email', 'email'), pick(t, 'seat', 'seat')]
+          .some(function (v) { return String(v).toLowerCase().indexOf(q) !== -1; });
+      });
+    }
+
+    function renderTable() {
+      var rows = filteredTickets();
+      var body = $('ticketsBody');
+      $('ticketCount').textContent = rows.length + ' من ' + state.tickets.length + ' تذكرة · ' + rows.length + ' shown';
+      $('tableFooter').textContent = 'عرض ' + rows.length + ' من ' + state.tickets.length;
+      $('emptyState').hidden = rows.length !== 0;
+      body.innerHTML = '';
+
+      rows.forEach(function (t) {
+        var id = pick(t, 'id', 'ticket_id');
+        var name = pick(t, 'name', 'holder_name');
+        var email = pick(t, 'email', 'email');
+        var seat = pick(t, 'seat', 'seat');
+        var checked = state.selection.has(id) ? ' checked' : '';
+        var tr = document.createElement('tr');
+        tr.setAttribute('data-id', id);
+        tr.innerHTML =
+          '<td class="px-3 py-3"><input type="checkbox" class="row-check h-4 w-4 accent-[#161411] cursor-pointer" data-action="select"' + checked + ' aria-label="Select ' + esc(id) + '" /></td>' +
+          '<td class="px-3 py-3"><span class="ltr font-display text-[11px] text-ink/70" dir="ltr">' + esc(id || '—') + '</span></td>' +
+          '<td class="px-3 py-3 font-semibold">' + esc(name || '—') + '</td>' +
+          '<td class="px-3 py-3"><span class="ltr text-[11px] text-ink/65" dir="ltr">' + esc(email || '—') + '</span></td>' +
+          '<td class="px-3 py-3"><span class="ltr font-display text-[11px]" dir="ltr">' + esc(seat || '—') + '</span></td>' +
+          '<td class="px-3 py-3">' + statusBadge(t.status) + '</td>' +
+          '<td class="px-3 py-3">' + designBadge(t.design) + '</td>' +
+          '<td class="px-3 py-3 text-ink/60"><span class="ltr text-[10px]" dir="ltr">' + fmtDate(pick(t, 'sentAt', 'sent_at')) + '</span></td>' +
+          '<td class="px-3 py-3 text-ink/60"><span class="ltr text-[10px]" dir="ltr">' + fmtDate(pick(t, 'openedAt', 'opened_at')) + '</span></td>' +
+          '<td class="px-3 py-3"><div class="flex flex-wrap gap-1.5">' +
+            '<button type="button" class="tkt-btn tkt-btn-ghost py-1 px-2 text-[10px]" data-action="edit" title="Edit">تعديل</button>' +
+            '<button type="button" class="tkt-btn tkt-btn-ghost py-1 px-2 text-[10px]" data-action="preview" title="Preview">معاينة</button>' +
+            '<button type="button" class="tkt-btn tkt-btn-gold py-1 px-2 text-[10px]" data-action="send" title="Send">إرسال</button>' +
+            '<button type="button" class="tkt-btn tkt-btn-danger py-1 px-2 text-[10px]" data-action="delete" title="Delete">حذف</button>' +
+          '</div></td>';
+        body.appendChild(tr);
+      });
+
+      var visibleIds = rows.map(function (t) { return pick(t, 'id', 'ticket_id'); }).filter(Boolean);
+      var allChecked = visibleIds.length > 0 && visibleIds.every(function (id) { return state.selection.has(id); });
+      $('selectAll').checked = allChecked;
+      $('selectAll').indeterminate = !allChecked && visibleIds.some(function (id) { return state.selection.has(id); });
+      updateSelectionBar();
+    }
+
+    function updateSelectionBar() {
+      var n = state.selection.size;
+      $('selectionBar').hidden = n === 0;
+      $('selectionText').textContent = 'تم تحديد ' + n + ' تذكرة · ' + n + ' selected';
+    }
+
+    /* ---------------- loaders ---------------- */
+    async function loadStats() {
+      try {
+        var data = await api('/api/admin/stats');
+        state.stats = data || {};
+        renderStats();
+      } catch (err) { showGlobalError(err); }
+    }
+
+    async function loadTickets() {
+      $('loadingState').hidden = false;
+      $('tableSpinner').hidden = false;
+      try {
+        var data = await api('/api/admin/tickets');
+        state.tickets = Array.isArray(data.tickets) ? data.tickets : [];
+        var ids = new Set(state.tickets.map(function (t) { return pick(t, 'id', 'ticket_id'); }).filter(Boolean));
+        state.selection.forEach(function (id) { if (!ids.has(id)) state.selection.delete(id); });
+        renderTable();
+        var first = state.tickets[0];
+        if (first) {
+          var title = pick(first, 'eventTitle', 'event_title');
+          if (title) $('eventNameLabel').textContent = title + (pick(first, 'eventSubtitle', 'event_subtitle') ? ' · ' + pick(first, 'eventSubtitle', 'event_subtitle') : '');
+        }
+        $('globalError').hidden = true;
+      } catch (err) {
+        showGlobalError(err);
+        $('emptyState').hidden = false;
+      } finally {
+        $('loadingState').hidden = true;
+        $('tableSpinner').hidden = true;
+      }
+    }
+
+    async function loadAll() {
+      await Promise.all([loadStats(), loadTickets()]);
+    }
+
+    /* ---------------- ticket modal ---------------- */
+    var editingId = null;
+
+    function resetForm() {
+      $('ticketForm').reset();
+      editingId = null;
+      $('ticketError').hidden = true;
+      $('ticketError').textContent = '';
+      $('ticketModalTitle').innerHTML = 'إضافة تذكرة <span class="font-display text-xs font-normal text-ink/40">New ticket</span>';
+    }
+
+    function openNewTicket() { resetForm(); openModal('ticketModal'); window.setTimeout(function () { try { $('f_name').focus(); } catch (e) {} }, 30); }
+
+    function openEditTicket(id) {
+      var t = state.tickets.find(function (x) { return pick(x, 'id', 'ticket_id') === id; });
+      if (!t) { toast('لم يتم العثور على التذكرة', 'error'); return; }
+      resetForm();
+      editingId = id;
+      $('ticketModalTitle').innerHTML = 'تعديل تذكرة <span class="font-display text-xs font-normal text-ink/40">Edit ticket</span>';
+      $('f_id').value = pick(t, 'id', 'ticket_id');
+      $('f_email').value = pick(t, 'email', 'email');
+      $('f_name').value = pick(t, 'name', 'holder_name');
+      $('f_seat').value = pick(t, 'seat', 'seat');
+      $('f_event_title').value = pick(t, 'eventTitle', 'event_title');
+      $('f_event_subtitle').value = pick(t, 'eventSubtitle', 'event_subtitle');
+      $('f_location').value = pick(t, 'location', 'location');
+      $('f_event_date').value = pick(t, 'eventDate', 'event_date');
+      $('f_starts_at').value = pick(t, 'startsAt', 'starts_at');
+      $('f_ends_at').value = pick(t, 'endsAt', 'ends_at');
+      openModal('ticketModal');
+    }
+
+    function buildTicketPayload() {
+      var v = function (id) { return $(id).value.trim(); };
+      var id = v('f_id');
+      var name = v('f_name');
+      var email = v('f_email');
+      var seat = v('f_seat');
+      var eventTitle = v('f_event_title');
+      var eventSubtitle = v('f_event_subtitle');
+      var location = v('f_location');
+      var eventDate = v('f_event_date');
+      var startsAt = v('f_starts_at');
+      var endsAt = v('f_ends_at');
+      // Include both naming styles so the API can read whichever convention it uses.
+      return {
+        id: id || undefined,
+        name: name,
+        holder_name: name,
+        email: email,
+        seat: seat,
+        eventTitle: eventTitle,
+        event_title: eventTitle,
+        eventSubtitle: eventSubtitle,
+        event_subtitle: eventSubtitle,
+        location: location,
+        eventDate: eventDate,
+        event_date: eventDate,
+        startsAt: startsAt,
+        starts_at: startsAt,
+        endsAt: endsAt,
+        ends_at: endsAt
+      };
+    }
+
+    async function saveTicket(event) {
+      event.preventDefault();
+      var form = $('ticketForm');
+      var missing = [];
+      [['f_name', 'اسم الحامل'], ['f_email', 'البريد الإلكتروني'], ['f_seat', 'المقعد'], ['f_event_title', 'عنوان الفعالية'], ['f_location', 'الموقع'], ['f_event_date', 'تاريخ الفعالية']].forEach(function (pair) {
+        if (!$(pair[0]).value.trim()) missing.push(pair[1]);
+      });
+      if (!form.checkValidity() || missing.length) {
+        $('ticketError').textContent = missing.length ? 'يرجى تعبئة الحقول المطلوبة: ' + missing.join('، ') : 'تحقق من صحة البيانات المدخلة (البريد الإلكتروني).';
+        $('ticketError').hidden = false;
+        return;
+      }
+      $('ticketError').hidden = true;
+      var payload = buildTicketPayload();
+      var isEdit = !!editingId;
+      setSpinner('saveSpinner', true);
+      $('saveTicketBtn').disabled = true;
+      try {
+        var result = await api(isEdit ? '/api/admin/tickets?id=' + encodeURIComponent(editingId) : '/api/admin/tickets', {
+          method: isEdit ? 'PATCH' : 'POST',
+          body: JSON.stringify({ ticket: payload })
+        });
+        closeModal('ticketModal');
+        toast(isEdit ? 'تم تحديث التذكرة بنجاح' : 'تمت إضافة التذكرة بنجاح', 'ok');
+        await Promise.all([loadTickets(), loadStats()]);
+        return result;
+      } catch (err) {
+        $('ticketError').textContent = err.message;
+        $('ticketError').hidden = false;
+      } finally {
+        setSpinner('saveSpinner', false);
+        $('saveTicketBtn').disabled = false;
+      }
+    }
+
+    /* ---------------- import ---------------- */
+    function openImport() {
+      $('csvFile').value = '';
+      $('csvText').value = '';
+      $('importError').hidden = true;
+      $('importResults').hidden = true;
+      openModal('importModal');
+    }
+
+    $('csvFile').addEventListener('change', function (event) {
+      var file = event.target.files && event.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        $('csvText').value = String(reader.result || '');
+        $('importError').hidden = true;
+      };
+      reader.onerror = function () {
+        $('importError').textContent = 'تعذّر قراءة الملف. جرّب لصق المحتوى يدويًا.';
+        $('importError').hidden = false;
+      };
+      reader.readAsText(file);
+    });
+
+    async function runImport() {
+      var csv = $('csvText').value;
+      if (!csv.trim()) {
+        $('importError').textContent = 'اختر ملفًا أو الصق محتوى CSV قبل الاستيراد.';
+        $('importError').hidden = false;
+        return;
+      }
+      $('importError').hidden = true;
+      setSpinner('importSpinner', true);
+      $('runImportBtn').disabled = true;
+      try {
+        var data = await api('/api/admin/import', { method: 'POST', body: JSON.stringify({ csv: csv }) });
+        $('importedCount').textContent = String(data.imported !== undefined ? data.imported : 0);
+        $('skippedCount').textContent = String(data.skipped !== undefined ? data.skipped : 0);
+        var errors = Array.isArray(data.errors) ? data.errors : [];
+        var list = $('importErrors');
+        list.innerHTML = '';
+        errors.forEach(function (err) {
+          var li = document.createElement('li');
+          li.textContent = 'صف ' + (err.row !== undefined ? err.row : '؟') + ': ' + (err.message || 'خطأ غير معروف');
+          list.appendChild(li);
+        });
+        $('importResults').hidden = false;
+        toast('اكتمل الاستيراد: ' + (data.imported || 0) + ' تذكرة', 'ok');
+        await Promise.all([loadTickets(), loadStats()]);
+      } catch (err) {
+        $('importError').textContent = err.message;
+        $('importError').hidden = false;
+      } finally {
+        setSpinner('importSpinner', false);
+        $('runImportBtn').disabled = false;
+      }
+    }
+
+    /* ---------------- preview / send / delete ---------------- */
+    async function previewTicket(id) {
+      try {
+        var data = await api('/api/admin/preview?id=' + encodeURIComponent(id));
+        var token = data && data.token;
+        if (!token) throw new Error('لم يتم إرجاع رمز المعاينة من الخادم.');
+        var win = window.open('/pass?t=' + encodeURIComponent(token), '_blank', 'noopener');
+        if (!win) toast('اسمح بالنوافذ المنبثقة لعرض المعاينة', 'error');
+      } catch (err) { toast(err.message, 'error'); }
+    }
+
+    async function sendTickets(payload, spinnerId) {
+      if (state.busy) return;
+      state.busy = true;
+      if (spinnerId) setSpinner(spinnerId, true);
+      $('sendAllBtn').disabled = true;
+      $('sendSelectedBtn').disabled = true;
+      try {
+        var data = await api('/api/admin/send', { method: 'POST', body: JSON.stringify(payload) });
+        var results = Array.isArray(data.results) ? data.results : [];
+        var skipped = Array.isArray(data.skipped) ? data.skipped : [];
+        var okCount = typeof data.sent === 'number' ? data.sent : results.filter(function (r) { return !!r.ok; }).length;
+        var failCount = typeof data.failed === 'number' ? data.failed : results.filter(function (r) { return !r.ok; }).length;
+        var remaining = typeof data.remaining === 'number' ? data.remaining : skipped.length;
+
+        var summary = 'تم إرسال ' + okCount + ' بنجاح · فشل ' + failCount;
+        if (remaining) summary += ' · متبقي ' + remaining;
+        if (data.capReached) summary += ' · بلغت الحد اليومي (' + data.dailyLimit + ') — أعد المحاولة غدًا';
+        if (data.stopped) summary += ' · توقّف الإرسال بسبب حد Gmail — أعد المحاولة لاحقًا';
+        $('sendSummary').textContent = summary;
+
+        var list = $('sendList');
+        list.innerHTML = '';
+        if (!results.length && !skipped.length) {
+          var empty = document.createElement('li');
+          empty.className = 'text-xs text-ink/50';
+          empty.textContent = 'لا توجد نتائج للعرض.';
+          list.appendChild(empty);
+        }
+        results.forEach(function (r) {
+          var li = document.createElement('li');
+          li.className = 'rounded-xl border px-3 py-2 flex items-start justify-between gap-3 ' + (r.ok ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50');
+          var label = document.createElement('span');
+          label.className = 'ltr text-[11px] font-display text-ink/75';
+          label.dir = 'ltr';
+          label.textContent = r.id || '—';
+          var status = document.createElement('span');
+          status.className = 'text-[11px] font-semibold ' + (r.ok ? 'text-emerald-800' : 'text-red-800');
+          status.textContent = r.ok ? '✓ نجح' : '✕ ' + (r.error || 'فشل الإرسال');
+          li.appendChild(label);
+          li.appendChild(status);
+          list.appendChild(li);
+        });
+        skipped.forEach(function (s) {
+          var li = document.createElement('li');
+          li.className = 'rounded-xl border border-gold/35 bg-gold/10 px-3 py-2 flex items-start justify-between gap-3';
+          var label = document.createElement('span');
+          label.className = 'ltr text-[11px] font-display text-ink/75';
+          label.dir = 'ltr';
+          label.textContent = s.id || '—';
+          var status = document.createElement('span');
+          status.className = 'text-[11px] font-semibold text-[#8A692E]';
+          status.textContent = s.reason === 'DAILY_LIMIT_REACHED' ? 'متبقي للغد' : 'لم يُرسل بعد';
+          li.appendChild(label);
+          li.appendChild(status);
+          list.appendChild(li);
+        });
+        openModal('sendModal');
+        toast('اكتمل الإرسال: ' + okCount + ' ناجح، ' + failCount + ' فاشل' + (remaining ? '، ' + remaining + ' متبقي' : ''), failCount ? 'info' : 'ok');
+        await Promise.all([loadTickets(), loadStats()]);
+      } catch (err) {
+        toast(err.message, 'error');
+      } finally {
+        state.busy = false;
+        if (spinnerId) setSpinner(spinnerId, false);
+        $('sendAllBtn').disabled = false;
+        $('sendSelectedBtn').disabled = false;
+      }
+    }
+
+    async function deleteTicket(id) {
+      if (!window.confirm('حذف التذكرة ' + id + '؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+      try {
+        await api('/api/admin/tickets?id=' + encodeURIComponent(id), { method: 'DELETE' });
+        state.selection.delete(id);
+        toast('تم حذف التذكرة', 'ok');
+        await Promise.all([loadTickets(), loadStats()]);
+      } catch (err) { toast(err.message, 'error'); }
+    }
+
+    async function logout() {
+      try { await api('/api/admin/logout', { method: 'POST', skipAuthRedirect: true }); }
+      catch (e) { /* still clear local session view */ }
+      state.selection.clear();
+      showLogin();
+    }
+
+    /* ---------------- events ---------------- */
+    $('loginForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+      var password = $('passwordInput').value;
+      if (!password) {
+        $('loginError').textContent = 'أدخل كلمة المرور أولًا.';
+        $('loginError').hidden = false;
+        return;
+      }
+      $('loginBtn').disabled = true;
+      setSpinner('loginSpinner', true);
+      $('loginError').hidden = true;
+      try {
+        await api('/api/admin/auth', { method: 'POST', skipAuthRedirect: true, body: JSON.stringify({ password: password }) });
+        showApp();
+        await loadAll();
+      } catch (err) {
+        $('loginError').textContent = err.status === 401 ? 'كلمة المرور غير صحيحة.' : err.message;
+        $('loginError').hidden = false;
+      } finally {
+        $('loginBtn').disabled = false;
+        setSpinner('loginSpinner', false);
+      }
+    });
+
+    $('togglePassword').addEventListener('click', function () {
+      var input = $('passwordInput');
+      var show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      this.textContent = show ? 'إخفاء' : 'إظهار';
+    });
+
+    $('logoutBtn').addEventListener('click', logout);
+    $('retryBtn').addEventListener('click', loadAll);
+    $('refreshBtn').addEventListener('click', loadAll);
+    $('newTicketBtn').addEventListener('click', openNewTicket);
+    $('importBtn').addEventListener('click', openImport);
+    $('runImportBtn').addEventListener('click', runImport);
+    $('ticketForm').addEventListener('submit', saveTicket);
+    $('sendAllBtn').addEventListener('click', function () { sendTickets({ all: true }, 'sendAllSpinner'); });
+    $('sendSelectedBtn').addEventListener('click', function () {
+      var ids = Array.from(state.selection);
+      if (!ids.length) { toast('اختر تذكرة واحدة على الأقل', 'error'); return; }
+      sendTickets({ ids: ids, force: true }, 'sendSelectedSpinner');
+    });
+
+    $('clearSelectionBtn').addEventListener('click', function () {
+      state.selection.clear();
+      renderTable();
+    });
+
+    $('searchInput').addEventListener('input', function (event) {
+      state.search = event.target.value || '';
+      renderTable();
+    });
+
+    $('selectAll').addEventListener('change', function (event) {
+      var checked = event.target.checked;
+      filteredTickets().forEach(function (t) {
+        var id = pick(t, 'id', 'ticket_id');
+        if (!id) return;
+        if (checked) state.selection.add(id); else state.selection.delete(id);
+      });
+      renderTable();
+    });
+
+    $('ticketsBody').addEventListener('change', function (event) {
+      var input = event.target.closest('.row-check');
+      if (!input) return;
+      var tr = input.closest('tr');
+      var id = tr && tr.getAttribute('data-id');
+      if (!id) return;
+      if (input.checked) state.selection.add(id); else state.selection.delete(id);
+      var visibleIds = filteredTickets().map(function (t) { return pick(t, 'id', 'ticket_id'); }).filter(Boolean);
+      $('selectAll').checked = visibleIds.length > 0 && visibleIds.every(function (x) { return state.selection.has(x); });
+      $('selectAll').indeterminate = false;
+      updateSelectionBar();
+    });
+
+    $('ticketsBody').addEventListener('click', function (event) {
+      var button = event.target.closest('button[data-action]');
+      if (!button) return;
+      var tr = button.closest('tr');
+      var id = tr && tr.getAttribute('data-id');
+      if (!id) return;
+      var action = button.getAttribute('data-action');
+      if (action === 'edit') openEditTicket(id);
+      else if (action === 'preview') previewTicket(id);
+      else if (action === 'send') sendTickets({ ids: [id] });
+      else if (action === 'delete') deleteTicket(id);
+    });
+
+    document.querySelectorAll('.close-modal').forEach(function (btn) {
+      btn.addEventListener('click', function () { closeModal(btn.getAttribute('data-close')); });
+    });
+
+    document.querySelectorAll('.modal-backdrop').forEach(function (backdrop) {
+      backdrop.addEventListener('mousedown', function (event) {
+        if (event.target === backdrop) closeModal(backdrop.id);
+      });
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape') return;
+      ['ticketModal', 'importModal', 'sendModal'].forEach(function (m) { if (!$(m).hidden) closeModal(m); });
+    });
+
+    /* ---------------- boot ---------------- */
+    (async function boot() {
+      showLogin();
+      try {
+        var data = await api('/api/admin/auth', { skipAuthRedirect: true });
+        if (data && data.authenticated) {
+          showApp();
+          await loadAll();
+        } else {
+          showLogin();
+        }
+      } catch (err) {
+        showLogin(err.message);
+      }
+    })();
+  </script>
+</body>
+</html>
