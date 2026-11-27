@@ -11,6 +11,10 @@ const pages = {
   admin: { html: 'admin.html', js: 'assets/admin.js' },
 };
 
+// Named element access exposes ids as window globals. These ids would shadow
+// the globals used by qrcode-generator and html2canvas.
+const reservedIds = new Set(['qrcode', 'qrcodeLarge', 'html2canvas']);
+
 let failed = false;
 
 for (const [name, { html: htmlFile, js: jsFile }] of Object.entries(pages)) {
@@ -29,6 +33,7 @@ for (const [name, { html: htmlFile, js: jsFile }] of Object.entries(pages)) {
   const htmlIds = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
   const htmlIdSet = new Set(htmlIds);
   const duplicates = htmlIds.filter((id, index) => htmlIds.indexOf(id) !== index);
+  const shadowingIds = htmlIds.filter((id) => reservedIds.has(id));
   const missingProps = [...usedProps].filter((prop) => !mappedProps.has(prop));
   const missingIds = [...referencedIds].filter((id) => !htmlIdSet.has(id));
 
@@ -36,6 +41,7 @@ for (const [name, { html: htmlFile, js: jsFile }] of Object.entries(pages)) {
     missingProps.length && `undeclared el props: ${missingProps.join(', ')}`,
     missingIds.length && `missing ids: ${missingIds.join(', ')}`,
     duplicates.length && `duplicate ids: ${[...new Set(duplicates)].join(', ')}`,
+    shadowingIds.length && `global-shadowing ids: ${[...new Set(shadowingIds)].join(', ')}`,
   ].filter(Boolean);
 
   if (problems.length) {

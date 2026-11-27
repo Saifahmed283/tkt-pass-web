@@ -13,7 +13,7 @@ import {
   syncModalScroll,
 } from './tkt-runtime.js';
 
-const QR_LIB = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+const QR_LIB = '/assets/qrcode.min.js';
 const HTML2CANVAS_LIB = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
 
 const THEMES = {
@@ -61,8 +61,8 @@ const el = {
   displayBackEvent: $('displayBackEvent'),
   displayScanCode: $('displayScanCode'),
   displayFooterCode: $('displayFooterCode'),
-  qrcode: $('qrcode'),
-  qrcodeLarge: $('qrcodeLarge'),
+  qrBox: $('qrBox'),
+  qrLarge: $('qrLarge'),
   mapsLink: $('mapsLinkBtn'),
   inputKeepsake: $('inputKeepsake'),
   colorHeader: $('colorHeader'),
@@ -190,18 +190,18 @@ function renderQr() {
   // Gate scanners validate signed credential codes. The reservation code is
   // displayed but never used as the entry payload.
   const payload = (data.scanCode || '').trim() || `TKT|${cleanId}|TKT|GA`;
-  if (payload === lastQrPayload && el.qrcode.firstChild) return;
+  if (payload === lastQrPayload && el.qrBox.firstChild) return;
   lastQrPayload = payload;
 
-  el.qrcode.innerHTML = buildQrSvg(payload, 112);
-  const smallSvg = el.qrcode.querySelector('svg');
+  el.qrBox.innerHTML = buildQrSvg(payload, 112);
+  const smallSvg = el.qrBox.querySelector('svg');
   if (smallSvg) {
     smallSvg.setAttribute('width', '112');
     smallSvg.setAttribute('height', '112');
   }
 
-  el.qrcodeLarge.innerHTML = buildQrSvg(payload, 210);
-  const largeSvg = el.qrcodeLarge.querySelector('svg');
+  el.qrLarge.innerHTML = buildQrSvg(payload, 210);
+  const largeSvg = el.qrLarge.querySelector('svg');
   if (largeSvg) {
     largeSvg.setAttribute('width', '210');
     largeSvg.setAttribute('height', '210');
