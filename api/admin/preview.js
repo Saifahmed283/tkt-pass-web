@@ -1,30 +1,27 @@
-import { allowMethods, json } from '../../lib/http.js';
-import { requireAdmin } from '../../lib/auth.js';
-import { signTicketToken } from '../../lib/jwt.js';
-
-function queryValue(req, key) {
-  const value = req?.query?.[key];
-  if (typeof value === 'string') return value;
-  if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
-  try {
-    return new URL(req?.url || '/', 'https://localhost').searchParams.get(key);
-  } catch {
-    return null;
-  }
-}
+import { allowMethods, json, readJson } from '../../lib/http.js';
+import { getAdminActor, requireAdmin } from '../../lib/auth.js';
+import { mainServiceApi } from '../../lib/main-api.js';
 
 export default async function handler(req, res) {
   try {
-    if (!allowMethods(req, res, 'GET')) return;
+    if (!allowMethods(req, res, 'POST')) return;
     if (!(await requireAdmin(req, res))) return;
 
-    const id = queryValue(req, 'id');
-    if (!id) return json(res, 400, { error: 'MISSING_ID' });
+    const body = await readJson(req);
+    const ticketId = body.ticketId;
+    if (typeof ticketId !== 'string' || !ticketId) {
+      return json(res, 400, { error: 'MISSING_TICKET_ID' });
+    }
 
-    const token = await signTicketToken({ ticketId: id, maxAgeSeconds: 600 });
-    return json(res, 200, { token });
+    const actor = await getAdminActor(req);
+    const data = await mainServiceApi(`/passes/tickets/${encodeURIComponent(ticketId)}/preview`, {
+      method: 'POST',
+      actor,
+      body: {},
+    });
+    return json(res, 200, data);
   } catch (error) {
-    console.error(error);
-    return json(res, 500, { error: 'SERVER_ERROR' });
+    console.error('pass preview failed:', error?.message || error);
+    return json(res, error.status || 500, { error: 'PASS_API_ERROR', message: error.message });
   }
 }

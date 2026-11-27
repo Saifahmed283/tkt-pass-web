@@ -1,7 +1,6 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { allowMethods, json, readJson } from '../../lib/http.js';
-import { getCookie, setAdminCookie } from '../../lib/auth.js';
-import { verifyAdminSession } from '../../lib/jwt.js';
+import { getAdminActor, setAdminCookie } from '../../lib/auth.js';
 
 function matches(password, expected) {
   if (!expected) return false;
@@ -15,9 +14,19 @@ export default async function handler(req, res) {
     if (!allowMethods(req, res, 'GET', 'POST')) return;
 
     if (String(req.method).toUpperCase() === 'GET') {
-      const token = getCookie(req, process.env.ADMIN_COOKIE || 'tkt_admin');
-      const payload = await verifyAdminSession(token);
-      return json(res, 200, { authenticated: payload !== null });
+      const actor = await getAdminActor(req);
+      return json(res, 200, {
+        authenticated: Boolean(actor),
+        actor: actor
+          ? {
+              master: actor.master,
+              name: actor.name,
+              email: actor.email,
+              platformRole: actor.platformRole,
+              orgRole: actor.orgRole,
+            }
+          : null,
+      });
     }
 
     const body = await readJson(req);
@@ -25,10 +34,10 @@ export default async function handler(req, res) {
       return json(res, 401, { error: 'UNAUTHORIZED' });
     }
 
-    await setAdminCookie(res);
+    await setAdminCookie(res, { master: true, name: 'Master admin' });
     return json(res, 200, { ok: true });
   } catch (error) {
-    console.error(error);
+    console.error('admin auth failed:', error?.message || error);
     return json(res, 500, { error: 'SERVER_ERROR' });
   }
 }

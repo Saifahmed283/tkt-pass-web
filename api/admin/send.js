@@ -1,36 +1,11 @@
 import { allowMethods, json, readJson } from '../../lib/http.js';
-import { requireAdmin } from '../../lib/auth.js';
-import { countSentToday, listTickets, logSend, markSent } from '../../lib/db.js';
-import { signTicketToken } from '../../lib/jwt.js';
-import { sendTicketEmail } from '../../lib/mail.js';
+import { getAdminActor, requireAdmin } from '../../lib/auth.js';
+import { mainServiceApi } from '../../lib/main-api.js';
 
 function intEnv(value, fallback, allowZero = false) {
-  const n = Number.parseInt(value, 10);
+  const n = Number.parseInt(String(value ?? ''), 10);
   if (!Number.isFinite(n)) return fallback;
   return allowZero ? Math.max(0, n) : Math.max(1, n);
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function isBatchStopper(error) {
-  const code = String(error?.code || error?.responseCode || '');
-  const message = String(error?.message || error || '').toLowerCase();
-  if (['EAUTH', 'ETIMEDOUT', 'ESOCKET', 'ECONNECTION', 'ECONNRESET'].includes(code)) return true;
-  return [
-    'rate limit',
-    'too many',
-    'quota',
-    'daily sending',
-    'temporarily unavailable',
-    '4.7.0',
-    '421',
-    '450',
-    '451',
-    '452',
-    '535',
-  ].some((needle) => message.includes(needle));
 }
 
 export default async function handler(req, res) {
@@ -39,101 +14,69 @@ export default async function handler(req, res) {
     if (!(await requireAdmin(req, res))) return;
 
     const body = await readJson(req);
-    const tickets = await listTickets();
-    const ids = Array.isArray(body.ids) ? body.ids.map(String) : null;
+    const actor = await getAdminActor(req);
+    const dailyLimit = intEnv(process.env.DAILY_SEND_LIMIT, 400, true);
+    const delayMs = intEnv(process.env.SEND_DELAY_MS, 1500, true);
+    const { sentToday } = await mainServiceApi('/public/passes/delivery-count');
+    const capacity = Math.max(0, dailyLimit - Number(sentToday || 0));
 
-    let targets = [];
-    if (body.all === true) {
-      // "Send remaining" only targets tickets that have never been sent.
-      targets = tickets.filter((ticket) => !ticket.sentAt);
-    } else if (ids && ids.length) {
-      // Selecting rows explicitly allows a deliberate resend.
-      targets = tickets.filter((ticket) => ids.includes(String(ticket.id)));
+    let requestedIds = Array.isArray(body.ids)
+      ? [...new Set(body.ids.map(String).filter(Boolean))]
+      : [];
+
+    if (requestedIds.length === 0 && typeof body.eventId === 'string' && body.eventId) {
+      const params = new URLSearchParams({ approval: 'APPROVED', passStatus: 'ALL' });
+      if (typeof body.q === 'string' && body.q.trim()) params.set('q', body.q.trim());
+      const data = await mainServiceApi(
+        `/passes/events/${encodeURIComponent(body.eventId)}/tickets?${params.toString()}`,
+        { actor },
+      );
+      requestedIds = (data.tickets || [])
+        .filter((ticket) => ticket.eligible && ticket.passStatus !== 'DELIVERED')
+        .map((ticket) => ticket.id);
     }
 
-    if (!targets.length) {
+    if (requestedIds.length === 0) {
       return json(res, 200, {
-        results: [],
+        queued: 0,
         skipped: [],
-        sent: 0,
-        failed: 0,
-        remaining: 0,
+        sentToday: Number(sentToday || 0),
+        dailyLimit,
+        delayMs,
         capReached: false,
-        stopped: false,
-        dailyLimit: intEnv(process.env.DAILY_SEND_LIMIT, 400, true),
-        sentToday: await countSentToday(),
       });
     }
 
-    const dailyLimit = intEnv(process.env.DAILY_SEND_LIMIT, 400, true);
-    const delayMs = intEnv(process.env.SEND_DELAY_MS, 1500, true);
-    const alreadySentToday = await countSentToday();
-    let capacity = Math.max(0, dailyLimit - alreadySentToday);
-
-    const results = [];
-    const skipped = [];
-    let stopped = false;
-
     if (capacity === 0) {
-      skipped.push(...targets.map((ticket) => ({ id: ticket.id, reason: 'DAILY_LIMIT_REACHED' })));
-    } else {
-      for (let index = 0; index < targets.length; index += 1) {
-        if (capacity <= 0) {
-          skipped.push(...targets.slice(index).map((ticket) => ({ id: ticket.id, reason: 'DAILY_LIMIT_REACHED' })));
-          break;
-        }
-
-        const ticket = targets[index];
-        try {
-          const token = await signTicketToken({ ticketId: ticket.id, endsAt: ticket.endsAt });
-          const providerId = await sendTicketEmail({
-            to: ticket.email,
-            name: ticket.name,
-            ticketId: ticket.id,
-            seat: ticket.seat,
-            eventTitle: ticket.eventTitle,
-            eventDate: ticket.eventDate,
-            token,
-          });
-          await logSend(ticket.id, 'ok', providerId, null);
-          await markSent(ticket.id);
-          results.push({ id: ticket.id, ok: true });
-          capacity -= 1;
-        } catch (error) {
-          const message = error?.message || String(error);
-          await logSend(ticket.id, 'error', null, message);
-          results.push({ id: ticket.id, ok: false, error: message });
-          if (isBatchStopper(error)) {
-            stopped = true;
-            skipped.push(...targets.slice(index + 1).map((item) => ({ id: item.id, reason: 'BATCH_STOPPED' })));
-            break;
-          }
-        }
-
-        const hasMore = index < targets.length - 1;
-        if (hasMore && !stopped && capacity > 0 && delayMs > 0) {
-          await sleep(delayMs);
-        }
-      }
+      return json(res, 200, {
+        queued: 0,
+        skipped: requestedIds.map((id) => ({ id, reason: 'DAILY_LIMIT_REACHED' })),
+        sentToday: Number(sentToday || 0),
+        dailyLimit,
+        delayMs,
+        capReached: true,
+      });
     }
 
-    const sent = results.filter((result) => result.ok).length;
-    const failed = results.length - sent;
-    const capReached = !stopped && capacity <= 0 && skipped.length > 0;
+    const acceptedIds = requestedIds.slice(0, capacity);
+    const skipped = requestedIds.slice(capacity).map((id) => ({ id, reason: 'DAILY_LIMIT_REACHED' }));
+    const result = await mainServiceApi('/passes/tickets/resend', {
+      method: 'POST',
+      actor,
+      body: { ids: acceptedIds },
+    });
 
     return json(res, 200, {
-      results,
+      queued: acceptedIds.length,
+      outboxEventIds: result?.data?.outboxEventIds || [],
       skipped,
-      sent,
-      failed,
-      remaining: skipped.length,
-      capReached,
-      stopped,
+      sentToday: Number(sentToday || 0),
       dailyLimit,
-      sentToday: alreadySentToday + sent,
+      delayMs,
+      capReached: skipped.length > 0,
     });
   } catch (error) {
-    console.error(error);
-    return json(res, 500, { error: 'SERVER_ERROR' });
+    console.error('pass send queue failed:', error?.message || error);
+    return json(res, error.status || 500, { error: 'PASS_API_ERROR', message: error.message });
   }
 }

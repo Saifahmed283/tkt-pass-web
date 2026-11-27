@@ -1,7 +1,6 @@
-import { allowMethods, json, readJson } from '../../lib/http.js';
-import { requireAdmin } from '../../lib/auth.js';
-import { deleteTicket, getTicket, listTickets, upsertTicket } from '../../lib/db.js';
-import { validateTicket } from '../../lib/validate.js';
+import { allowMethods, json } from '../../lib/http.js';
+import { getAdminActor, requireAdmin } from '../../lib/auth.js';
+import { mainServiceApi } from '../../lib/main-api.js';
 
 function queryValue(req, key) {
   const value = req?.query?.[key];
@@ -16,48 +15,26 @@ function queryValue(req, key) {
 
 export default async function handler(req, res) {
   try {
+    if (!allowMethods(req, res, 'GET')) return;
     if (!(await requireAdmin(req, res))) return;
-    if (!allowMethods(req, res, 'GET', 'POST', 'PATCH', 'DELETE')) return;
 
-    const method = req.method.toUpperCase();
+    const eventId = queryValue(req, 'eventId');
+    if (!eventId) return json(res, 400, { error: 'MISSING_EVENT_ID' });
 
-    if (method === 'GET') {
-      return json(res, 200, { tickets: await listTickets() });
-    }
+    const approval = queryValue(req, 'approval') || 'ALL';
+    const passStatus = queryValue(req, 'passStatus') || 'ALL';
+    const q = queryValue(req, 'q') || '';
+    const params = new URLSearchParams({ approval, passStatus });
+    if (q) params.set('q', q);
 
-    const body = await readJson(req);
-    const payload = body.ticket && typeof body.ticket === 'object' ? body.ticket : body;
-
-    if (method === 'POST') {
-      let ticket;
-      try {
-        ticket = validateTicket(payload);
-      } catch (error) {
-        return json(res, 400, { error: 'INVALID_TICKET', message: error.message });
-      }
-      return json(res, 200, { ticket: await upsertTicket(ticket) });
-    }
-
-    const id = queryValue(req, 'id') || payload.id;
-    if (!id) return json(res, 400, { error: 'MISSING_ID' });
-
-    if (method === 'PATCH') {
-      const existing = await getTicket(id);
-      if (!existing) return json(res, 404, { error: 'NOT_FOUND' });
-
-      let ticket;
-      try {
-        ticket = validateTicket({ ...existing, ...payload, id });
-      } catch (error) {
-        return json(res, 400, { error: 'INVALID_TICKET', message: error.message });
-      }
-      return json(res, 200, { ticket: await upsertTicket(ticket) });
-    }
-
-    await deleteTicket(id);
-    return json(res, 200, { ok: true });
+    const actor = await getAdminActor(req);
+    const data = await mainServiceApi(
+      `/passes/events/${encodeURIComponent(eventId)}/tickets?${params.toString()}`,
+      { actor },
+    );
+    return json(res, 200, data);
   } catch (error) {
-    console.error(error);
-    return json(res, 500, { error: 'SERVER_ERROR' });
+    console.error('pass tickets failed:', error?.message || error);
+    return json(res, error.status || 500, { error: 'PASS_API_ERROR', message: error.message });
   }
 }

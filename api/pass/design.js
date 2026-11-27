@@ -1,6 +1,5 @@
 import { allowMethods, json, readJson } from '../../lib/http.js';
-import { verifyTicketToken } from '../../lib/jwt.js';
-import { saveDesign } from '../../lib/db.js';
+import { mainServiceApi } from '../../lib/main-api.js';
 import { validateDesign } from '../../lib/validate.js';
 
 export default async function handler(req, res) {
@@ -9,25 +8,32 @@ export default async function handler(req, res) {
 
     const body = await readJson(req);
     const token = body.t || req?.query?.t;
-    if (!token) return json(res, 401, { error: 'UNAUTHORIZED' });
-
-    const payload = await verifyTicketToken(token);
-    if (!payload) return json(res, 401, { error: 'UNAUTHORIZED' });
+    if (!token || typeof token !== 'string') {
+      return json(res, 400, { error: 'INVALID_LINK' });
+    }
 
     let design;
     try {
       design = validateDesign(body.design);
     } catch (error) {
-      return json(res, 400, {
-        error: 'INVALID_DESIGN',
-        message: error.message,
+      return json(res, 400, { error: 'INVALID_DESIGN', message: error.message });
+    }
+
+    const result = await mainServiceApi('/public/passes/design', {
+      method: 'POST',
+      body: { t: token, design },
+    });
+
+    if (result?.error) {
+      const expired = result.error === 'EXPIRED_LINK';
+      return json(res, expired ? 410 : 401, {
+        error: expired ? 'EXPIRED_LINK' : 'INVALID_LINK',
       });
     }
 
-    const saved = await saveDesign(payload.tid, design);
-    return json(res, 200, { ok: true, updatedAt: saved.updatedAt });
+    return json(res, 200, { ok: true });
   } catch (error) {
-    console.error(error);
+    console.error('pass design save failed:', error?.message || error);
     return json(res, 500, { error: 'SERVER_ERROR' });
   }
 }
