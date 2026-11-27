@@ -17,11 +17,9 @@ const QR_LIB = '/assets/qrcode.min.js';
 const HTML2CANVAS_LIB = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
 
 const THEMES = {
-  'royal-gold': { header: '#161411', accent: '#D4B475', accentDark: '#9E7B3B', accentLight: '#FFF2CC', body: '#F7F5F0', footer: '#EFECE4' },
-  'rose-blush': { header: '#2D1824', accent: '#F4A9C7', accentDark: '#B84A78', accentLight: '#FFE4F0', body: '#FDF7FA', footer: '#F7EBF1' },
-  'lilac-dream': { header: '#211936', accent: '#C8B2FF', accentDark: '#6D4AC4', accentLight: '#EFE8FF', body: '#F8F6FC', footer: '#EFEBF7' },
-  'emerald-wild': { header: '#10261F', accent: '#6EE7B7', accentDark: '#1E7A58', accentLight: '#D1FAE5', body: '#F5FAF8', footer: '#E8F3EE' },
-  'midnight-sky': { header: '#0F1E33', accent: '#7DD3FC', accentDark: '#1D6FA5', accentLight: '#E0F2FE', body: '#F5F9FC', footer: '#E8F1F8' },
+  'classic-black': { header: '#171717', accent: '#D2B36B', accentDark: '#8C6D32', accentLight: '#F5E8C9', body: '#F8F7F3', footer: '#EEECE5' },
+  'tkt-pink': { header: '#F20A91', accent: '#FFFFFF', accentDark: '#B80068', accentLight: '#FFE1F1', body: '#F8F7F3', footer: '#EEECE5' },
+  'sand-gold': { header: '#C9A45B', accent: '#171717', accentDark: '#8A682D', accentLight: '#F5E8C9', body: '#F8F7F3', footer: '#EEECE5' },
 };
 
 const PREVIEW = {
@@ -88,7 +86,7 @@ const isFilePreview = window.location.protocol === 'file:' && !ticketToken;
 const store = createStore({
   load: { status: 'loading', code: null },
   data: { ...PREVIEW },
-  design: { theme: 'royal-gold', custom: null, quote: 'أحلى لمة ومغامرة في وادي دجلة ✨' },
+  design: { theme: 'classic-black', custom: null, quote: 'أحلى لمة ومغامرة في وادي دجلة ✨' },
   save: { status: 'idle' },
   ui: {
     flipped: false,
@@ -122,7 +120,7 @@ function mixColors(hexA, hexB, weightOfB) {
 }
 
 function getPalette(themeKey, custom) {
-  const base = THEMES[themeKey] || THEMES['royal-gold'];
+  const base = THEMES[themeKey] || THEMES['classic-black'];
   if (!custom) return base;
   const header = normalizeHex(custom.header, base.header);
   const accent = normalizeHex(custom.accent, base.accent);
@@ -136,8 +134,25 @@ function getPalette(themeKey, custom) {
   };
 }
 
+const BUS_MEETING_POINT_URL = 'https://maps.app.goo.gl/JFMBNuEzgfewvNNRA';
+const BUS_MEETING_POINT_LABEL = 'نقطة الالتقاء بالباص';
+const PROGRAM_LOCATION_LABEL = 'Camp Abu Jaser';
+
+function isProgramPass(data, ticket) {
+  const candidates = [
+    ticket.passKind, ticket.pass_kind, ticket.passType, ticket.pass_type,
+    ticket.programType, ticket.program_type, ticket.eventType, ticket.event_type,
+    ticket.ticketType, ticket.ticket_type, ticket.category, ticket.type,
+    data.passKind, data.pass_kind, data.passType, data.pass_type,
+    data.programType, data.program_type, data.eventType, data.event_type,
+    data.event?.type, data.event?.category, data.event?.kind,
+  ];
+  return candidates.some((value) => /program/i.test(String(value || '').trim()));
+}
+
 function ticketFromApi(data) {
   const ticket = data.ticket || {};
+  const passKind = isProgramPass(data, ticket) ? 'program' : 'bus';
   return {
     id: ticket.id || PREVIEW.id,
     scanCode: ticket.scanCode || '',
@@ -148,34 +163,30 @@ function ticketFromApi(data) {
     dateTime: ticket.eventDate || PREVIEW.dateTime,
     startsAt: data.startsAt || PREVIEW.startsAt,
     endsAt: data.endsAt ?? null,
-    location: ticket.location || PREVIEW.location,
+    location: passKind === 'program' ? PROGRAM_LOCATION_LABEL : BUS_MEETING_POINT_LABEL,
+    passKind,
   };
 }
 
 function designFromApi(data) {
   const design = data.design || {};
-  const theme = THEMES[design.theme] ? design.theme : 'royal-gold';
+  const theme = THEMES[design.theme] ? design.theme : 'classic-black';
   return {
     theme,
-    custom: design.header && design.accent
-      ? {
-          header: normalizeHex(design.header, THEMES[theme].header),
-          accent: normalizeHex(design.accent, THEMES[theme].accent),
-        }
-      : null,
+    custom: null,
     quote: design.quote || '',
     graphic: ['none', 'topographic', 'contours', 'grid', 'orbit', 'diagonal'].includes(design.graphic) ? design.graphic : 'none',
   };
 }
 
 function currentDesign() {
-  const { theme, custom, quote, graphic } = store.get().design;
+  const { theme } = store.get().design;
   return {
     theme,
-    header: custom ? custom.header : null,
-    accent: custom ? custom.accent : null,
-    quote: quote || '',
-    graphic: graphic || 'none',
+    header: null,
+    accent: null,
+    quote: '',
+    graphic: 'none',
   };
 }
 
@@ -273,6 +284,7 @@ function renderTicket() {
   el.displayHolderName.textContent = data.name || 'Guest';
   el.displayLocation.textContent = data.location;
   el.displaySeat.textContent = data.seat || 'General Admission';
+  document.querySelectorAll('[data-bus-only]').forEach((node) => node.classList.toggle('hidden', data.passKind === 'program'));
   el.displayBackEvent.textContent = data.event;
   el.displayScanCode.textContent = data.scanCode || data.id;
   el.displayFooterCode.textContent = `${data.id} · SCAN AT ENTRY`;
@@ -281,15 +293,17 @@ function renderTicket() {
   el.modalTicketId.textContent = data.id;
 
   if (el.mapsLink) {
-    const query = encodeURIComponent(data.location || 'Wadi Degla Protectorate, Cairo, Egypt');
-    el.mapsLink.href = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    const isBusPass = data.passKind !== 'program';
+    el.mapsLink.classList.toggle('hidden', !isBusPass);
+    el.mapsLink.href = BUS_MEETING_POINT_URL;
+    el.mapsLink.setAttribute('aria-label', isBusPass ? 'افتح نقطة الالتقاء بالباص على خرائط Google' : 'لا توجد نقطة التقاء لهذا الحجز');
   }
   renderQr();
 }
 
 function renderDesign() {
   const { design } = store.get();
-  const palette = getPalette(design.theme, design.custom);
+  const palette = getPalette(design.theme, null);
   const root = document.documentElement;
   root.style.setProperty('--pass-header', palette.header);
   root.style.setProperty('--pass-accent', palette.accent);
@@ -302,29 +316,6 @@ function renderDesign() {
   if (el.colorAccent) el.colorAccent.value = palette.accent;
   if (el.inputKeepsake && document.activeElement !== el.inputKeepsake) {
     el.inputKeepsake.value = design.quote || '';
-  }
-  const graphic = design.graphic || 'none';
-  const patterns = {
-    topographic: `<svg xmlns="http://www.w3.org/2000/svg" width="260" height="180" viewBox="0 0 260 180"><g fill="none" stroke="%23D4B475" stroke-width="1.4" opacity=".30"><path d="M-20 42C35-8 78 2 108 36s72 47 172-8M-20 58C35 8 78 18 108 52s72 47 172-8M-20 74C35 24 78 34 108 68s72 47 172-8M-20 90C35 40 78 50 108 84s72 47 172-8M-20 106C35 56 78 66 108 100s72 47 172-8M-20 122C35 72 78 82 108 116s72 47 172-8"/></g></svg>`,
-    contours: `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="180" viewBox="0 0 220 180"><g fill="none" stroke="%23D4B475" stroke-width="1.5" opacity=".27"><path d="M-20 90C10 15 70 10 110 45s80 45 130-10M-20 100C10 25 70 20 110 55s80 45 130-10M-20 110C10 35 70 30 110 65s80 45 130-10M-20 120C10 45 70 40 110 75s80 45 130-10M-20 130C10 55 70 50 110 85s80 45 130-10"/></g></svg>`,
-    grid: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><g fill="none" stroke="%23D4B475" stroke-width="1" opacity=".22"><path d="M0 0H48V48H0zM24 0V48M0 24H48"/></g></svg>`,
-    orbit: `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="180" viewBox="0 0 220 180"><g fill="none" stroke="%23D4B475" stroke-width="1.5" opacity=".28"><ellipse cx="110" cy="90" rx="95" ry="38"/><ellipse cx="110" cy="90" rx="72" ry="58" transform="rotate(-28 110 90)"/><ellipse cx="110" cy="90" rx="42" ry="82" transform="rotate(34 110 90)"/></g></svg>`,
-    diagonal: `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44"><g fill="none" stroke="%23D4B475" stroke-width="1.4" opacity=".24"><path d="M-10 44L44-10M0 54L54 0M-20 34L34-20M10 64L64 10"/></g></svg>`,
-  };
-  const svg = patterns[graphic];
-  const accentHex = palette.accent.slice(1).toUpperCase();
-  const image = svg ? `url("data:image/svg+xml,${svg.replaceAll('%23D4B475', '%23' + accentHex)}")` : 'none';
-  if (el.passHeader) el.passHeader.style.backgroundImage = image;
-  if (el.passBody) el.passBody.style.backgroundImage = image;
-  if (el.graphicSwatches) {
-    el.graphicSwatches.querySelectorAll('.graphic-swatch').forEach((button) => {
-      const selected = button.dataset.graphic === graphic;
-      button.classList.toggle('border-2', selected);
-      button.classList.toggle('border-[#161411]', selected);
-      button.classList.toggle('border', !selected);
-      button.classList.toggle('border-[#D4CBB8]', !selected);
-      button.setAttribute('aria-pressed', selected ? 'true' : 'false');
-    });
   }
 
   if (el.themeSwatches) {
@@ -339,9 +330,6 @@ function renderDesign() {
     });
   }
 
-  const quote = (design.quote || '').trim();
-  el.keepsakeWrapper.classList.toggle('hidden', !quote);
-  el.displayKeepsake.textContent = design.quote || '';
 }
 
 function renderFlip() {
@@ -421,7 +409,7 @@ async function loadPass({ force = false } = {}) {
   if (isFilePreview) {
     store.set({
       data: { ...PREVIEW },
-      design: { theme: 'royal-gold', custom: null, quote: 'أحلى لمة ومغامرة في وادي دجلة ✨' },
+      design: { theme: 'classic-black', custom: null, quote: '' },
       load: { status: 'ready', code: null },
     });
     return;
@@ -591,10 +579,11 @@ bindAction($('doneEditBtn'), closeEdit, {});
 bindAction($('openQrModalBtn'), openQr, {});
 bindAction($('closeQrModalBtn'), closeQr, {});
 bindAction($('printPassBtn'), async () => {
-  await setFlipped(false, true);
+  // PDF/print must contain both faces, with the QR fully rendered on the back.
+  await ensureQrLibrary();
   await nextFrame();
   window.print();
-}, { statusEl: el.actionStatus, successText: 'تم تجهيز التذكرة للطباعة', successTtl: 2400 });
+}, { statusEl: el.actionStatus, successText: 'تم تجهيز وجهي التذكرة للحفظ كـ PDF', successTtl: 2400 });
 bindAction($('downloadIcsBtn'), downloadIcs, {
   statusEl: el.actionStatus,
   successText: 'تم تنزيل موعد الفعالية',
@@ -622,10 +611,6 @@ delegateAction(el.themeSwatches, '.theme-swatch', (_event, button) => {
   updateDesign({ theme: button.dataset.theme, custom: null });
 });
 
-delegateAction(el.graphicSwatches, '.graphic-swatch', (_event, button) => {
-  updateDesign({ graphic: button.dataset.graphic });
-});
-
 el.passFlip.addEventListener('click', (event) => {
   if (event.target instanceof Element && event.target.closest('button')) return;
   toggleFlip();
@@ -636,19 +621,6 @@ el.passFlip.addEventListener('keydown', (event) => {
     event.preventDefault();
     toggleFlip();
   }
-});
-el.inputKeepsake.addEventListener('input', (event) => {
-  updateDesign({ quote: event.target.value });
-});
-el.colorHeader.addEventListener('input', (event) => {
-  const design = store.get().design;
-  const palette = getPalette(design.theme, design.custom);
-  updateDesign({ custom: { header: event.target.value, accent: palette.accent } });
-});
-el.colorAccent.addEventListener('input', (event) => {
-  const design = store.get().design;
-  const palette = getPalette(design.theme, design.custom);
-  updateDesign({ custom: { header: palette.header, accent: event.target.value } });
 });
 document.addEventListener('keydown', (event) => {
   if (event.key !== 'Escape') return;
