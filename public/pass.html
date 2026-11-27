@@ -43,8 +43,24 @@
     }
     .pass-flip__inner {
       display: grid;
+      grid-template-areas: "pass-face";
       transform-style: preserve-3d;
       transition: transform 760ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    /* Keep both sides in the same measured card footprint.
+       The tallest face defines the row; the shorter face stretches only its background. */
+    .pass-flip__face {
+      grid-area: pass-face;
+      min-width: 0;
+    }
+    .pass-flip__back {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
+    .pass-flip__back > .perforation-wrapper {
+      flex: 1 0 auto;
+      background-color: var(--pass-body);
     }
     .pass-flip.is-flipped .pass-flip__inner {
       transform: rotateY(180deg);
@@ -339,7 +355,7 @@
           <p id="displayBackEvent" class="mt-3 text-[13px] font-semibold text-white/85 truncate">Wadi Degla Resrve | محمية وادي دجلة</p>
         </div>
 
-        <div class="perforation-wrapper bg-[var(--pass-footer)] border-t-2 border-dashed border-[var(--pass-accent)] px-7 pt-7 pb-7 flex flex-col items-center text-center transition-colors duration-300">
+        <div class="perforation-wrapper bg-[var(--pass-body)] border-t-2 border-dashed border-[var(--pass-accent)] px-7 pt-7 pb-7 flex flex-col items-center text-center transition-colors duration-300">
           <button
             id="openQrModalBtn"
             type="button"
