@@ -148,35 +148,53 @@
       border-radius: 8px;
     }
 
-    /* Print Styling: Print only the clean ticket pass */
+    /* PDF/print export: front and back on separate pages in one document. */
     @media print {
-      body {
+      @page { size: A5 portrait; margin: 10mm; }
+      html, body {
         background: #FFFFFF !important;
         padding: 0 !important;
+        margin: 0 !important;
+        min-height: 0 !important;
+        display: block !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
-      .no-print {
-        display: none !important;
-      }
+      .no-print { display: none !important; }
       .perforation-wrapper::before,
-      .perforation-wrapper::after {
-        background-color: #FFFFFF !important;
-      }
+      .perforation-wrapper::after { background-color: #FFFFFF !important; }
       .pass-flip {
+        width: 100% !important;
+        max-width: none !important;
         perspective: none !important;
+        overflow: visible !important;
+        height: auto !important;
       }
       .pass-flip__inner {
         display: block !important;
         transform: none !important;
+        transition: none !important;
+        height: auto !important;
       }
       .pass-flip__face {
+        display: block !important;
+        position: relative !important;
+        inset: auto !important;
+        width: 100% !important;
+        height: auto !important;
+        transform: none !important;
         backface-visibility: visible !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
       }
       .pass-flip__back {
-        display: none !important;
+        display: block !important;
+        break-before: page !important;
+        page-break-before: always !important;
       }
       .tkt-card-shadow {
         box-shadow: none !important;
-        border: 1px solid #D4B475;
+        border: 1px solid #D4B475 !important;
       }
     }
   </style>

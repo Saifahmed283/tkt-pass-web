@@ -579,10 +579,11 @@ bindAction($('doneEditBtn'), closeEdit, {});
 bindAction($('openQrModalBtn'), openQr, {});
 bindAction($('closeQrModalBtn'), closeQr, {});
 bindAction($('printPassBtn'), async () => {
-  await setFlipped(false, true);
+  // PDF/print must contain both faces, with the QR fully rendered on the back.
+  await ensureQrLibrary();
   await nextFrame();
   window.print();
-}, { statusEl: el.actionStatus, successText: 'تم تجهيز التذكرة للطباعة', successTtl: 2400 });
+}, { statusEl: el.actionStatus, successText: 'تم تجهيز وجهي التذكرة للحفظ كـ PDF', successTtl: 2400 });
 bindAction($('downloadIcsBtn'), downloadIcs, {
   statusEl: el.actionStatus,
   successText: 'تم تنزيل موعد الفعالية',
