@@ -3,302 +3,296 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#161411" />
-  <title>TKT-PASS — لوحة المنظمين</title>
+  <meta name="theme-color" content="#171512" />
+  <title>TKT-PASS — Organizer Console</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            cream: '#E7E3D8',
-            paper: '#F7F5F0',
-            ink: '#161411',
-            gold: '#D4B475'
-          },
-          fontFamily: {
-            sans: ['Cairo', 'Poppins', 'sans-serif'],
-            display: ['Poppins', 'Cairo', 'sans-serif']
-          }
-        }
-      }
-    };
-  </script>
-  <style>
-    html, body { font-family: 'Cairo', 'Poppins', sans-serif; }
-    body {
-      background-color: #E7E3D8;
-      background-image:
-        radial-gradient(1100px 600px at 85% -10%, rgba(212,180,117,.20), transparent 60%),
-        radial-gradient(900px 500px at 0% 100%, rgba(22,20,17,.07), transparent 60%);
-      background-attachment: fixed;
-    }
-    .tkt-card {
-      background: #F7F5F0;
-      border: 1px solid rgba(22,20,17,.09);
-      box-shadow: 0 18px 42px -28px rgba(22,20,17,.55), 0 2px 8px -4px rgba(22,20,17,.18);
-    }
-    .tkt-input {
-      width: 100%;
-      border-radius: .75rem;
-      border: 1px solid rgba(22,20,17,.16);
-      background: #fff;
-      color: #161411;
-      padding: .55rem .8rem;
-      font-size: .82rem;
-      outline: none;
-      transition: border-color .18s ease, box-shadow .18s ease;
-    }
-    .tkt-input:focus { border-color: #D4B475; box-shadow: 0 0 0 3px rgba(212,180,117,.22); }
-    .tkt-btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
-      border-radius: .75rem; padding: .5rem .85rem; font-size: .78rem; font-weight: 600;
-      border: 1px solid transparent; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease, opacity .15s ease;
-    }
-    .tkt-btn:hover:not(:disabled) { transform: translateY(-1px); }
-    .tkt-btn:disabled { opacity: .5; cursor: not-allowed; }
-    .tkt-btn-ink { background: #161411; color: #F7F5F0; }
-    .tkt-btn-gold { background: #D4B475; color: #161411; }
-    .tkt-btn-ghost { background: transparent; color: #161411; border-color: rgba(22,20,17,.18); }
-    .tkt-btn-ghost:hover:not(:disabled) { background: rgba(22,20,17,.05); }
-    .spin { display: inline-block; width: .9rem; height: .9rem; border: 2px solid currentColor; border-right-color: transparent; border-radius: 9999px; animation: tkt-spin .7s linear infinite; }
-    @keyframes tkt-spin { to { transform: rotate(360deg); } }
-    .ltr { direction: ltr; unicode-bidi: isolate; }
-    [hidden] { display: none !important; }
-    .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(22,20,17,.55); }
-    .modal-panel { max-height: calc(100vh - 2rem); overflow-y: auto; width: 100%; }
-    .toast { animation: tkt-in .2s ease-out; }
-    @keyframes tkt-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    ::-webkit-scrollbar { width: 9px; height: 9px; }
-    ::-webkit-scrollbar-thumb { background: rgba(22,20,17,.22); border-radius: 9999px; border: 2px solid transparent; background-clip: padding-box; }
-  </style>
-  <link rel="stylesheet" href="/assets/tkt.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/admin.css" />
 </head>
-<body class="min-h-screen text-ink antialiased selection:bg-gold/40">
+<body class="admin-body">
 
-  <!-- LOGIN -->
-  <div id="loginView" class="min-h-screen flex items-center justify-center px-4 py-10">
-    <div class="tkt-card w-full max-w-md rounded-3xl p-7 sm:p-9">
-      <div class="flex items-center gap-3 mb-7">
-        <div class="h-12 w-12 rounded-2xl bg-ink text-paper font-display font-bold flex items-center justify-center text-sm tracking-wider">TKT</div>
+  <!-- ============================== LOGIN ============================== -->
+  <div id="loginView" class="login-shell">
+    <section class="login-aside">
+      <div class="login-brand">
+        <span class="login-brand__mark">TKT</span>
         <div>
-          <p class="text-lg font-bold leading-tight">TKT-PASS</p>
-          <p class="text-xs text-ink/50 font-display">Organizer dashboard</p>
+          <p class="login-brand__name">TKT-PASS</p>
+          <p class="login-brand__sub">Organizer console</p>
         </div>
       </div>
 
-      <h1 class="text-2xl font-bold mb-1">تسجيل الدخول</h1>
-      <p class="text-sm text-ink/55 mb-5">تابع باستخدام حساب TKT، أو استخدم كلمة مرور المنظم الرئيسية.</p>
-
-      <a href="https://ticketak.vercel.app/login?passHandoff=1"
-         class="tkt-btn tkt-btn-ink w-full py-3 mb-4 no-underline">
-        <span>متابعة باستخدام TKT</span>
-        <span class="font-display text-[10px] opacity-60 block">Continue with TKT</span>
-      </a>
-
-      <div class="flex items-center gap-3 text-[11px] text-ink/40 my-4">
-        <div class="h-px flex-1 bg-ink/10"></div><span>أو</span><div class="h-px flex-1 bg-ink/10"></div>
+      <div class="login-aside__copy">
+        <p class="eyebrow">Access · Issuance · Insights</p>
+        <h1>Every pass,<br />under control.</h1>
+        <p>من منصة TKT إلى بوابة الضيوف: اعرض الفعاليات، راجع الأشخاص والتذاكر، وأرسل الجوازات بتصميم موحّد.</p>
       </div>
 
-      <form id="loginForm" novalidate>
-        <label for="passwordInput" class="block text-sm font-semibold mb-2">كلمة مرور المنظم <span class="text-ink/40 text-xs font-normal font-display">Master password</span></label>
-        <input id="passwordInput" type="password" autocomplete="current-password" class="tkt-input ltr" placeholder="••••••••" required />
-        <p id="loginError" class="text-xs text-red-700 mt-3" hidden></p>
-        <button id="loginBtn" type="submit" class="tkt-btn tkt-btn-gold w-full mt-4 py-3">
-          <span class="spin" id="loginSpinner" hidden></span><span>دخول</span>
-        </button>
-      </form>
-      <p class="text-[11px] text-ink/40 mt-6 text-center font-display">Secure organizer access · Session cookie only</p>
-    </div>
+      <div class="login-aside__foot"><span></span> Secure organizer access</div>
+    </section>
+
+    <section class="login-panel">
+      <div class="login-card">
+        <div class="login-card__head">
+          <h2>تسجيل الدخول</h2>
+          <p>تابع بحساب TKT الخاص بك، أو استخدم كلمة مرور المنظّم الرئيسية.</p>
+        </div>
+
+        <a href="https://ticketak.vercel.app/login?passHandoff=1" class="btn btn-primary btn-block" style="min-height:48px">
+          <span>متابعة باستخدام TKT</span>
+          <span class="display" style="font-size:10px;opacity:.6">Continue with TKT</span>
+        </a>
+
+        <div class="divider">أو</div>
+
+        <form id="loginForm" novalidate>
+          <label class="field" for="passwordInput">
+            <span class="field-label">كلمة مرور المنظّم <em>Master password</em></span>
+            <input id="passwordInput" type="password" autocomplete="current-password" class="control ltr" placeholder="••••••••" required />
+          </label>
+          <p id="loginError" class="login-error" role="alert" hidden></p>
+          <button id="loginBtn" type="submit" class="btn btn-gold btn-block" style="margin-top:18px;min-height:46px">
+            <span class="spin" id="loginSpinner" hidden></span><span>دخول</span>
+          </button>
+        </form>
+
+        <p class="login-card__note">Session cookie only · No credentials stored in this browser</p>
+      </div>
+    </section>
   </div>
 
-  <!-- APP -->
-  <div id="appView" hidden>
-    <header class="sticky top-0 z-30 border-b border-ink/10 bg-paper/85 backdrop-blur">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
-        <div class="flex items-center gap-3 min-w-0">
-          <div class="h-10 w-10 rounded-xl bg-ink text-paper font-display font-bold flex items-center justify-center text-[11px] tracking-wider shrink-0">TKT</div>
-          <div class="min-w-0">
-            <p class="font-bold leading-tight text-sm sm:text-base">TKT-PASS <span class="text-ink/40 text-xs font-normal">/ لوحة المنظمين</span></p>
-            <p id="authBadge" class="text-[11px] text-ink/50 truncate">—</p>
+  <!-- =============================== APP =============================== -->
+  <div id="appView" class="admin-shell" hidden>
+    <aside class="admin-sidebar">
+      <div class="sidebar-brand">
+        <span class="sidebar-brand__mark">TKT</span>
+        <div>
+          <p class="sidebar-brand__name">TKT-PASS</p>
+          <p class="sidebar-brand__sub">Organizer console</p>
+        </div>
+      </div>
+
+      <nav class="admin-nav" aria-label="Console sections">
+        <p class="admin-nav__label">Workspace</p>
+        <a class="admin-nav__item is-active" href="#workspace"><span class="admin-nav__icon">◇</span> مساحة العمل</a>
+        <a class="admin-nav__item" href="#events"><span class="admin-nav__icon">◈</span> الفعاليات</a>
+        <a class="admin-nav__item" href="#insights"><span class="admin-nav__icon">▤</span> التحليلات</a>
+        <a class="admin-nav__item" href="#people"><span class="admin-nav__icon">☰</span> الأشخاص والتذاكر</a>
+      </nav>
+
+      <div class="sidebar-foot">
+        <strong>Delivery control</strong>
+        <p>الإرسال يخضع للحد اليومي وسياسة إعادة المحاولة. التصميم يبقى ثابتاً للضيوف عدا الألوان وملاحظة الذكرى.</p>
+      </div>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <div class="crumbs">
+          <strong>TKT-PASS</strong>
+          <span class="crumbs__sep">/</span>
+          <span class="crumbs__label">Organizer console</span>
+        </div>
+        <div class="topbar-actions">
+          <span id="authBadge" class="user-chip">—</span>
+          <button id="logoutBtn" class="btn btn-ghost btn-sm"><span class="spin" id="logoutSpinner" hidden></span> خروج</button>
+        </div>
+      </header>
+
+      <main class="admin-content">
+        <div id="globalError" class="alert" role="alert" hidden>
+          <span class="alert__icon">!</span>
+          <div class="alert__body">
+            <p class="alert__title">تعذّر تحميل البيانات</p>
+            <p id="globalErrorText" class="alert__text"></p>
           </div>
+          <button id="retryBtn" class="btn btn-danger btn-sm alert__action"><span class="spin" id="retrySpinner" hidden></span> إعادة المحاولة</button>
         </div>
-        <button id="logoutBtn" class="tkt-btn tkt-btn-ghost"><span class="spin" id="logoutSpinner" hidden></span>خروج</button>
-      </div>
-    </header>
 
-    <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 space-y-5">
-      <div id="globalError" class="rounded-2xl border border-red-300 bg-red-50 px-4 py-3 flex items-start gap-3" role="alert" hidden>
-        <span class="text-red-700 text-lg leading-none">!</span>
-        <div class="flex-1">
-          <p class="text-xs font-bold text-red-800">تعذّر تحميل البيانات</p>
-          <p id="globalErrorText" class="text-xs text-red-700 mt-0.5"></p>
-        </div>
-        <button id="retryBtn" class="inline-flex items-center gap-1.5 text-xs font-bold text-red-800 underline"><span class="spin" id="retrySpinner" hidden></span>إعادة المحاولة</button>
-      </div>
+        <!-- WORKSPACE -->
+        <section id="workspace" class="admin-card">
+          <div class="card-head">
+            <div>
+              <h2 class="card-head__title">مساحة العمل</h2>
+              <p class="card-head__sub">اختر المنظّمة، ثم المجلد، ثم الفعالية لعرض البيانات الكاملة.</p>
+            </div>
+            <span class="status-pill status-pill--published">Filtered view</span>
+          </div>
+          <div class="card-body">
+            <div class="workspace-grid">
+              <label class="field" for="orgSelect">
+                <span class="field-label">المنظّمة <em>Organization</em></span>
+                <select id="orgSelect" class="control"></select>
+              </label>
+              <label class="field" for="folderSelect">
+                <span class="field-label">المجلد <em>Folder</em></span>
+                <select id="folderSelect" class="control"></select>
+              </label>
+              <div class="field">
+                <span class="field-label">عرض الفعاليات <em>Event filter</em></span>
+                <div id="eventFilter" class="segmented" role="group" aria-label="Event filter">
+                  <button type="button" class="filter-btn" data-filter="upcoming" aria-pressed="true">قادمة</button>
+                  <button type="button" class="filter-btn" data-filter="past" aria-pressed="false">سابقة</button>
+                  <button type="button" class="filter-btn" data-filter="all" aria-pressed="false">الكل</button>
+                </div>
+              </div>
 
-      <!-- FILTER FLOW -->
-      <section class="tkt-card rounded-3xl p-4 sm:p-5">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <label class="block">
-            <span class="block text-xs font-semibold mb-1">المنظمة <span class="font-display font-normal text-[9px] text-ink/40">Organization</span></span>
-            <select id="orgSelect" class="tkt-input"></select>
-          </label>
-          <label class="block">
-            <span class="block text-xs font-semibold mb-1">المجلد <span class="font-display font-normal text-[9px] text-ink/40">Folder</span></span>
-            <select id="folderSelect" class="tkt-input"></select>
-          </label>
-          <div>
-            <span class="block text-xs font-semibold mb-1">حالة الفعالية <span class="font-display font-normal text-[9px] text-ink/40">Event filter</span></span>
-            <div id="eventFilter" class="flex gap-1 rounded-xl bg-ink/5 p-1">
-              <button data-filter="upcoming" class="filter-btn tkt-btn tkt-btn-ghost flex-1 py-1.5 text-xs">قادمة</button>
-              <button data-filter="past" class="filter-btn tkt-btn tkt-btn-ghost flex-1 py-1.5 text-xs">سابقة</button>
-              <button data-filter="all" class="filter-btn tkt-btn tkt-btn-ghost flex-1 py-1.5 text-xs">الكل</button>
+              <div class="workspace-events">
+                <div class="workspace-events__head">
+                  <h3 id="folderTitle" class="workspace-events__title">—</h3>
+                  <span id="eventCount" class="status-pill">—</span>
+                </div>
+                <div id="eventList" class="event-grid" aria-live="polite"></div>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div class="mt-4 border-t border-ink/10 pt-4">
-          <div class="flex items-center justify-between gap-3 mb-3">
-            <p id="folderTitle" class="text-sm font-bold">—</p>
-            <p id="eventCount" class="text-[11px] text-ink/45">—</p>
+        <!-- EVENT DETAIL -->
+        <section id="eventPanel" class="event-detail" hidden>
+          <div class="event-hero admin-card">
+            <div>
+              <h2 id="eventTitle" class="event-hero__title">—</h2>
+              <p id="eventMeta" class="event-hero__meta">—</p>
+            </div>
+            <div class="event-hero__actions">
+              <button id="designBtn" class="btn btn-ghost">تصميم الجواز</button>
+              <button id="sendRemainingBtn" class="btn btn-gold"><span class="spin" id="sendSpinner" hidden></span> إرسال المتبقي</button>
+            </div>
           </div>
-          <div id="eventList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"></div>
-        </div>
-      </section>
 
-      <!-- EVENT ANALYTICS -->
-      <section id="eventPanel" hidden class="space-y-5">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="min-w-0">
-            <h2 id="eventTitle" class="text-lg font-bold truncate">—</h2>
-            <p id="eventMeta" class="text-[11px] text-ink/50">—</p>
+          <div id="insights">
+            <div id="statsGrid" class="kpi-grid" aria-live="polite"></div>
+            <div id="breakdownGrid" class="breakdown-grid" style="margin-top:14px"></div>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <button id="designBtn" class="tkt-btn tkt-btn-ghost">تصميم الجواز <span class="font-display text-[9px] opacity-50 hidden sm:block">Design</span></button>
-            <button id="sendRemainingBtn" class="tkt-btn tkt-btn-gold"><span class="spin" id="sendSpinner" hidden></span>إرسال المتبقي <span class="font-display text-[9px] opacity-60 hidden sm:block">Send remaining</span></button>
-          </div>
-        </div>
 
-        <div id="statsGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3"></div>
-        <div id="breakdownGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-3"></div>
-
-        <div class="tkt-card rounded-3xl overflow-hidden">
-          <div class="px-4 sm:px-6 py-4 border-b border-ink/10">
-            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <section id="people" class="admin-card">
+            <div class="card-head">
               <div>
-                <h3 class="text-base font-bold">الأشخاص والتذاكر <span class="font-display text-xs font-normal text-ink/40">People & tickets</span></h3>
-                <p id="ticketCount" class="text-[11px] text-ink/50 mt-0.5">—</p>
+                <h3 class="card-head__title">الأشخاص والتذاكر</h3>
+                <p id="ticketCount" class="card-head__sub">—</p>
               </div>
-              <span id="tableSpinner" class="spin text-gold" hidden></span>
+              <span id="tableSpinner" class="spin" style="color:var(--gold-dark)" hidden></span>
             </div>
-            <div class="flex flex-wrap gap-2">
-              <input id="ticketSearch" type="search" class="tkt-input flex-1 min-w-[180px]" placeholder="بحث بالاسم، البريد، المعرّف" />
-              <select id="approvalFilter" class="tkt-input w-auto">
-                <option value="ALL">كل الموافقات</option>
-                <option value="APPROVED">موافق عليه</option>
-                <option value="PENDING">قيد الانتظار</option>
-                <option value="REJECTED">مرفوض</option>
-                <option value="NONE">بدون موافقة</option>
-              </select>
-              <select id="passFilter" class="tkt-input w-auto">
-                <option value="ALL">كل الجوازات</option>
-                <option value="NOT_ISSUED">لم يُصدر</option>
-                <option value="ISSUED">مُصدر</option>
-                <option value="DELIVERED">مُرسل</option>
-                <option value="FAILED">فشل</option>
-                <option value="REVOKED">ملغي</option>
-              </select>
-              <button id="refreshBtn" class="tkt-btn tkt-btn-ghost"><span class="spin" id="refreshSpinner" hidden></span>تحديث</button>
-            </div>
-            <div id="selectionBar" class="mt-3 rounded-xl bg-gold/15 border border-gold/35 px-3 py-2 flex items-center justify-between gap-3" hidden>
-              <p id="selectionText" class="text-xs font-semibold"></p>
-              <div class="flex gap-2">
-                <button id="clearSelectionBtn" class="tkt-btn tkt-btn-ghost py-1 px-2 text-xs">إلغاء</button>
-                <button id="sendSelectedBtn" class="tkt-btn tkt-btn-ink py-1 px-2 text-xs"><span class="spin" id="sendSelectedSpinner" hidden></span>إرسال المحدد</button>
+            <div class="card-body">
+              <div class="toolbar">
+                <label class="field field--search" for="ticketSearch">
+                  <span class="field-label">بحث <em>Search</em></span>
+                  <input id="ticketSearch" type="search" class="control" placeholder="بالاسم، البريد، أو المعرّف" />
+                </label>
+                <label class="field" for="approvalFilter">
+                  <span class="field-label">الموافقة <em>Approval</em></span>
+                  <select id="approvalFilter" class="control">
+                    <option value="ALL">كل الموافقات</option>
+                    <option value="APPROVED">موافق عليه</option>
+                    <option value="PENDING">قيد الانتظار</option>
+                    <option value="REJECTED">مرفوض</option>
+                    <option value="NONE">بدون موافقة</option>
+                  </select>
+                </label>
+                <label class="field" for="passFilter">
+                  <span class="field-label">الجواز <em>Pass</em></span>
+                  <select id="passFilter" class="control">
+                    <option value="ALL">كل الجوازات</option>
+                    <option value="NOT_ISSUED">لم يُصدر</option>
+                    <option value="ISSUED">مُصدر</option>
+                    <option value="DELIVERED">مُرسل</option>
+                    <option value="FAILED">فشل</option>
+                    <option value="REVOKED">ملغي</option>
+                  </select>
+                </label>
+                <button id="refreshBtn" class="btn btn-ghost"><span class="spin" id="refreshSpinner" hidden></span> تحديث</button>
               </div>
-            </div>
-          </div>
 
-          <div id="ticketCards" class="space-y-2 p-3 md:hidden"></div>
-          <div class="hidden overflow-x-auto md:block">
-            <table class="w-full min-w-[980px] text-xs">
-              <thead class="bg-ink/[.04] text-ink/60">
-                <tr>
-                  <th class="px-3 py-3 text-right w-10"><input id="selectAll" type="checkbox" class="h-4 w-4 accent-[#161411]" /></th>
-                  <th class="px-3 py-3 text-right">المعرّف</th>
-                  <th class="px-3 py-3 text-right">الاسم</th>
-                  <th class="px-3 py-3 text-right">البريد</th>
-                  <th class="px-3 py-3 text-right">المقعد</th>
-                  <th class="px-3 py-3 text-right">الموافقة</th>
-                  <th class="px-3 py-3 text-right">الدفع</th>
-                  <th class="px-3 py-3 text-right">الجواز</th>
-                  <th class="px-3 py-3 text-right">إجراءات</th>
-                </tr>
-              </thead>
-              <tbody id="ticketsBody" class="divide-y divide-ink/[.07]"></tbody>
-            </table>
-          </div>
-          <div id="emptyState" class="px-6 py-14 text-center" hidden>
-            <p class="font-bold text-sm">لا توجد تذاكر مطابقة</p>
-            <p class="text-xs text-ink/50 mt-1">غيّر الفلاتر أو اختر فعالية أخرى.</p>
-          </div>
-          <div id="loadingState" class="px-6 py-14 text-center" hidden><span class="spin text-gold mx-auto"></span></div>
-        </div>
-      </section>
-    </main>
+              <div id="selectionBar" class="selection-bar" hidden>
+                <p id="selectionText"></p>
+                <div class="selection-bar__actions">
+                  <button id="clearSelectionBtn" class="btn btn-ghost btn-sm">إلغاء التحديد</button>
+                  <button id="sendSelectedBtn" class="btn btn-primary btn-sm"><span class="spin" id="sendSelectedSpinner" hidden></span> إرسال المحدد</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="ticketCards" class="ticket-cards" aria-live="polite"></div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th class="col-check"><input id="selectAll" type="checkbox" class="checkbox" aria-label="Select all eligible tickets" /></th>
+                    <th>المعرّف</th>
+                    <th>الاسم</th>
+                    <th>البريد</th>
+                    <th>المقعد</th>
+                    <th>الموافقة</th>
+                    <th>الدفع</th>
+                    <th>الجواز</th>
+                    <th class="col-actions">إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="ticketsBody"></tbody>
+              </table>
+            </div>
+
+            <div id="emptyState" class="state-block" hidden>
+              <p class="state-block__title">لا توجد تذاكر مطابقة</p>
+              <p class="state-block__text">غيّر الفلاتر أو اختر فعالية أخرى.</p>
+            </div>
+            <div id="loadingState" class="state-block" hidden><span class="spin"></span></div>
+          </section>
+        </section>
+      </main>
+    </div>
   </div>
 
-  <!-- DESIGN MODAL -->
+  <!-- =========================== DESIGN MODAL ========================== -->
   <div id="designModal" class="modal-backdrop" hidden data-dialog>
-    <div class="modal-panel tkt-card rounded-3xl max-w-2xl">
-      <div class="px-5 sm:px-7 py-5 border-b border-ink/10 flex items-start justify-between gap-4">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="designModalTitle">
+      <div class="modal-head">
         <div>
-          <h3 class="text-lg font-bold">تصميم الجواز <span class="font-display text-xs font-normal text-ink/40">Pass design</span></h3>
-          <p class="text-[11px] text-ink/50 mt-0.5">التصميم الافتراضي للفعالية؛ يجوز للضيوف تعديل الألوان والجملة فقط بعد الموافقة.</p>
+          <h3 id="designModalTitle">تصميم الجواز</h3>
+          <p>التصميم الافتراضي للفعالية. للضيف تغيير الألوان وملاحظة الذكرى فقط.</p>
         </div>
-        <button type="button" class="text-ink/45 hover:text-ink text-xl leading-none" data-close-design>×</button>
+        <button type="button" class="icon-btn" data-close-design aria-label="Close">×</button>
       </div>
-      <div class="px-5 sm:px-7 py-5 space-y-4">
-        <div>
-          <span class="block text-xs font-semibold mb-2">الثيم <span class="font-display font-normal text-[9px] text-ink/40">Theme</span></span>
-          <div id="themeSwatches" class="flex flex-wrap gap-2"></div>
+      <div class="modal-body">
+        <div class="field">
+          <span class="field-label">الثيم <em>Theme</em></span>
+          <div id="themeSwatches" class="theme-grid"></div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label class="block">
-            <span class="block text-xs font-semibold mb-1">لون الرأس</span>
-            <input id="designHeader" type="color" class="tkt-input h-11 p-1" />
+        <div class="workspace-grid" style="grid-column:1/-1">
+          <label class="field" for="designHeader">
+            <span class="field-label">لون الرأس</span>
+            <input id="designHeader" type="color" class="control" />
           </label>
-          <label class="block">
-            <span class="block text-xs font-semibold mb-1">لون التمييز</span>
-            <input id="designAccent" type="color" class="tkt-input h-11 p-1" />
+          <label class="field" for="designAccent">
+            <span class="field-label">لون التمييز</span>
+            <input id="designAccent" type="color" class="control" />
           </label>
         </div>
-        <label class="block">
-          <span class="block text-xs font-semibold mb-1">جملة ذكرى افتراضية</span>
-          <input id="designQuote" class="tkt-input ltr" maxlength="90" placeholder="A moment to remember" />
+        <label class="field" for="designQuote">
+          <span class="field-label">جملة ذكرى افتراضية <em>Default memory note</em></span>
+          <input id="designQuote" class="control ltr" maxlength="90" placeholder="A moment to remember" />
         </label>
-        <label class="flex items-start gap-2 text-xs text-ink/65">
-          <input id="resetTickets" type="checkbox" class="mt-0.5 h-4 w-4 accent-[#161411]" />
-          <span>إعادة ضبط تخصيصات التذاكر الحالية على هذا التصميم</span>
+        <label class="check-field">
+          <input id="resetTickets" type="checkbox" class="checkbox" />
+          <span>إعادة ضبط تخصيصات التذاكر الحالية على هذا التصميم.</span>
         </label>
-        <p id="designError" class="text-xs text-red-700" role="alert" hidden></p>
+        <p id="designError" class="form-error" role="alert" hidden></p>
       </div>
-      <div class="px-5 sm:px-7 pb-5 flex items-center justify-between gap-2 border-t border-ink/10 pt-4">
-        <button id="resetDesignBtn" class="tkt-btn tkt-btn-ghost">إعادة افتراضي</button>
-        <div class="flex gap-2">
-          <button type="button" class="tkt-btn tkt-btn-ghost" data-close-design>إلغاء</button>
-          <button id="saveDesignBtn" class="tkt-btn tkt-btn-ink"><span class="spin" id="designSpinner" hidden></span>حفظ</button>
+      <div class="modal-foot">
+        <button id="resetDesignBtn" class="btn btn-ghost">إعادة افتراضي</button>
+        <div class="modal-foot__actions">
+          <button type="button" class="btn btn-ghost" data-close-design>إلغاء</button>
+          <button id="saveDesignBtn" class="btn btn-primary"><span class="spin" id="designSpinner" hidden></span> حفظ</button>
         </div>
       </div>
     </div>
   </div>
 
-  <div id="toastHost" class="fixed bottom-4 left-4 right-4 z-[60] space-y-2 sm:left-auto sm:right-4 sm:w-80" aria-live="polite"></div>
+  <div id="toastHost" class="toast-stack" aria-live="polite"></div>
   <script type="module" src="/assets/admin.js"></script>
 </body>
 </html>

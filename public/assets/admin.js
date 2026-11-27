@@ -32,23 +32,23 @@ const THEME_LABELS = {
 
 const BADGES = {
   approval: {
-    APPROVED: { label: 'موافق عليه', cls: 'bg-emerald-100 text-emerald-800' },
-    PENDING: { label: 'قيد الانتظار', cls: 'bg-amber-100 text-amber-800' },
-    REJECTED: { label: 'مرفوض', cls: 'bg-red-100 text-red-800' },
-    NONE: { label: 'بدون', cls: 'bg-ink/5 text-ink/60' },
+    APPROVED: { label: 'موافق عليه', cls: 'badge badge--success' },
+    PENDING: { label: 'قيد الانتظار', cls: 'badge badge--warning' },
+    REJECTED: { label: 'مرفوض', cls: 'badge badge--danger' },
+    NONE: { label: 'بدون', cls: 'badge badge--muted' },
   },
   pass: {
-    NOT_ISSUED: { label: 'لم يُصدر', cls: 'bg-ink/5 text-ink/60' },
-    ISSUED: { label: 'مُصدر', cls: 'bg-blue-100 text-blue-800' },
-    DELIVERED: { label: 'مُرسل', cls: 'bg-emerald-100 text-emerald-800' },
-    FAILED: { label: 'فشل', cls: 'bg-red-100 text-red-800' },
-    REVOKED: { label: 'ملغي', cls: 'bg-ink/5 text-ink/60' },
+    NOT_ISSUED: { label: 'لم يُصدر', cls: 'badge badge--muted' },
+    ISSUED: { label: 'مُصدر', cls: 'badge badge--info' },
+    DELIVERED: { label: 'مُرسل', cls: 'badge badge--success' },
+    FAILED: { label: 'فشل', cls: 'badge badge--danger' },
+    REVOKED: { label: 'ملغي', cls: 'badge badge--muted' },
   },
   payment: {
-    NOT_REQUIRED: { label: 'لا يتطلب', cls: 'bg-ink/5 text-ink/60' },
-    CONFIRMED: { label: 'مؤكد', cls: 'bg-emerald-100 text-emerald-800' },
-    PENDING: { label: 'قيد المراجعة', cls: 'bg-amber-100 text-amber-800' },
-    FAILED: { label: 'فشل', cls: 'bg-red-100 text-red-800' },
+    NOT_REQUIRED: { label: 'لا يتطلب', cls: 'badge badge--muted' },
+    CONFIRMED: { label: 'مؤكد', cls: 'badge badge--success' },
+    PENDING: { label: 'قيد المراجعة', cls: 'badge badge--warning' },
+    FAILED: { label: 'فشل', cls: 'badge badge--danger' },
   },
 };
 
@@ -92,6 +92,7 @@ const el = {
   sendSpinner: $('sendSpinner'),
   statsGrid: $('statsGrid'),
   breakdownGrid: $('breakdownGrid'),
+  ticketCount: $('ticketCount'),
   ticketSearch: $('ticketSearch'),
   approvalFilter: $('approvalFilter'),
   passFilter: $('passFilter'),
@@ -99,6 +100,7 @@ const el = {
   refreshSpinner: $('refreshSpinner'),
   selectionBar: $('selectionBar'),
   selectionText: $('selectionText'),
+  selectAll: $('selectAll'),
   clearSelectionBtn: $('clearSelectionBtn'),
   sendSelectedBtn: $('sendSelectedBtn'),
   sendSelectedSpinner: $('sendSelectedSpinner'),
@@ -159,8 +161,8 @@ function clearError() {
 }
 
 function badge(value, map) {
-  const entry = map[value] || { label: value || '—', cls: 'bg-ink/5 text-ink/60' };
-  return `<span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${entry.cls}">${escapeHtml(entry.label)}</span>`;
+  const entry = map[value] || { label: value || '—', cls: 'badge badge--muted' };
+  return `<span class="${entry.cls}">${escapeHtml(entry.label)}</span>`;
 }
 
 function isPast(event) {
@@ -253,7 +255,6 @@ function renderEvents() {
   const state = store.get();
   el.eventFilter.querySelectorAll('.filter-btn').forEach((button) => {
     const active = button.dataset.filter === state.eventFilter;
-    button.className = `filter-btn tkt-btn flex-1 py-1.5 text-xs ${active ? 'tkt-btn-ink' : 'tkt-btn-ghost'}`;
     button.setAttribute('aria-pressed', active ? 'true' : 'false');
   });
 
@@ -264,19 +265,26 @@ function renderEvents() {
   el.eventCount.textContent = `${events.length} event${events.length === 1 ? '' : 's'}`;
 
   if (!events.length) {
-    el.eventList.innerHTML = '<p class="text-xs text-ink/50 col-span-full">لا توجد فعاليات في هذا العرض.</p>';
+    el.eventList.innerHTML = '<p class="small muted" style="grid-column:1/-1;margin:0">لا توجد فعاليات في هذا العرض.</p>';
   } else {
     el.eventList.innerHTML = events.map((event) => {
       const active = event.id === state.eventId;
       const date = formatEgyptDate(event.startAt, { day: 'numeric', month: 'short', year: 'numeric' });
-      return `<button type="button" class="event-card text-right rounded-2xl border p-3 tkt-card-lift ${active ? 'border-gold bg-gold/15' : 'border-ink/10 bg-white/60 hover:border-gold/60'}"
-                      data-event-id="${escapeHtml(event.id)}" aria-pressed="${active ? 'true' : 'false'}">
-                <div class="flex items-start justify-between gap-2">
-                  <p class="text-sm font-bold leading-snug truncate">${escapeHtml(event.name)}</p>
-                  <span class="text-[9px] rounded-full px-2 py-0.5 bg-ink/5 text-ink/60 whitespace-nowrap">${escapeHtml(STATUS_LABELS[event.status] || event.status || '—')}</span>
+      const statusClass = event.status === 'LIVE'
+        ? 'status-pill status-pill--live'
+        : event.status === 'PUBLISHED'
+          ? 'status-pill status-pill--published'
+          : 'status-pill';
+      const count = Number(event.ticketCount || 0);
+      return `<button type="button" class="event-card" data-event-id="${escapeHtml(event.id)}" aria-pressed="${active ? 'true' : 'false'}">
+                <div class="event-card__top">
+                  <p class="event-card__title">${escapeHtml(event.name)}</p>
+                  <span class="${statusClass}">${escapeHtml(STATUS_LABELS[event.status] || event.status || '—')}</span>
                 </div>
-                <p class="text-[11px] text-ink/50 mt-1 ltr">${escapeHtml(date)}</p>
-                <p class="text-[11px] text-ink/45 mt-2">${Number(event.ticketCount || 0)} ticket${Number(event.ticketCount || 0) === 1 ? '' : 's'}</p>
+                <div class="event-card__meta">
+                  <span class="display">◷ ${escapeHtml(date)}</span>
+                  <span>▣ ${count} ticket${count === 1 ? '' : 's'}</span>
+                </div>
               </button>`;
     }).join('');
   }
@@ -291,19 +299,20 @@ function renderEventPanel() {
 }
 
 function statCard(label, sub, value, tone = '') {
-  return `<div class="tkt-card rounded-2xl p-3 sm:p-4">
-            <p class="text-[10px] font-semibold text-ink/55">${escapeHtml(label)} <span class="block font-display font-normal text-[8px] text-ink/35">${escapeHtml(sub)}</span></p>
-            <p class="font-display text-xl sm:text-2xl font-semibold mt-2 ${tone}">${escapeHtml(value)}</p>
+  return `<div class="kpi ${tone}">
+            <p class="kpi__label">${escapeHtml(label)}</p>
+            <p class="kpi__sub">${escapeHtml(sub)}</p>
+            <p class="kpi__value">${escapeHtml(value)}</p>
           </div>`;
 }
 
 function breakdownCard(title, entries) {
-  const rows = entries.map(([label, value]) => `<div class="flex items-center justify-between border-t border-ink/5 py-1.5 first:border-0">
-      <span class="text-[11px] text-ink/55">${escapeHtml(label)}</span>
-      <span class="text-xs font-semibold font-display">${escapeHtml(value)}</span>
+  const rows = entries.map(([label, value]) => `<div class="breakdown__row">
+      <span>${escapeHtml(label)}</span>
+      <span>${escapeHtml(value)}</span>
     </div>`).join('');
-  return `<div class="tkt-card rounded-2xl p-4">
-            <p class="text-xs font-bold mb-2">${escapeHtml(title)}</p>${rows || '<p class="text-[11px] text-ink/45">—</p>'}
+  return `<div class="breakdown">
+            <p class="breakdown__title">${escapeHtml(title)}</p>${rows || '<p class="breakdown__empty">—</p>'}
           </div>`;
 }
 
@@ -320,8 +329,8 @@ function renderAnalytics() {
   el.statsGrid.innerHTML = [
     statCard('أشخاص', 'People', stats.people ?? 0),
     statCard('تذاكر', 'Tickets', stats.tickets ?? 0),
-    statCard('جوازات مؤهلة', 'Eligible passes', stats.eligiblePasses ?? 0, 'text-emerald-700'),
-    statCard('مُرسَلة', 'Delivered', pass.DELIVERED ?? 0),
+    statCard('جوازات مؤهلة', 'Eligible passes', stats.eligiblePasses ?? 0, 'kpi--accent'),
+    statCard('مُرسَلة', 'Delivered', pass.DELIVERED ?? 0, 'kpi--gold'),
     statCard('مفتوحة', 'Opened', stats.opened ?? 0),
     statCard('مُخصّصة', 'Customized', stats.customized ?? 0),
   ].join('');
@@ -351,19 +360,20 @@ function renderTickets() {
 
   el.ticketsBody.innerHTML = tickets.map((ticket) => {
     const selected = state.selected.has(ticket.id);
-    return `<tr class="${selected ? 'bg-gold/10' : ''}">
-      <td class="px-3 py-2.5"><input type="checkbox" class="h-4 w-4 accent-[#161411]" data-select-id="${escapeHtml(ticket.id)}" ${selected ? 'checked' : ''} ${ticket.eligible ? '' : 'disabled title="غير مؤهل · Not eligible"'} /></td>
-      <td class="px-3 py-2.5 font-display text-[11px] ltr">${escapeHtml(ticket.id)}</td>
-      <td class="px-3 py-2.5 font-semibold">${escapeHtml(ticket.name || '—')}</td>
-      <td class="px-3 py-2.5 ltr text-[11px] text-ink/60" dir="ltr">${escapeHtml(ticket.email || '—')}</td>
-      <td class="px-3 py-2.5 text-[11px]">${escapeHtml(ticket.seat || '—')}</td>
-      <td class="px-3 py-2.5">${badge(ticket.approval, BADGES.approval)}</td>
-      <td class="px-3 py-2.5">${badge(ticket.payment, BADGES.payment)}</td>
-      <td class="px-3 py-2.5">${badge(ticket.passStatus, BADGES.pass)}${ticket.eligible ? '' : '<span class="mr-1 text-[9px] text-ink/35">غير مؤهل</span>'}</td>
-      <td class="px-3 py-2.5">
-        <div class="flex gap-1">
-          <button type="button" class="tkt-btn tkt-btn-ghost py-1 px-2 text-[10px]" data-preview-id="${escapeHtml(ticket.id)}" ${ticket.eligible ? '' : 'disabled title="وافق على الحجز وأكّد الدفع قبل المعاينة"'}>معاينة</button>
-          <button type="button" class="tkt-btn tkt-btn-ink py-1 px-2 text-[10px]" data-send-id="${escapeHtml(ticket.id)}" ${ticket.eligible ? '' : 'disabled title="وافق على الحجز وأكّد الدفع قبل الإرسال"'}>إرسال</button>
+    const eligibleAttr = ticket.eligible ? '' : 'disabled title="وافق على الحجز وأكّد الدفع أولاً"';
+    return `<tr data-selected="${selected ? 'true' : 'false'}">
+      <td><input type="checkbox" class="checkbox" data-select-id="${escapeHtml(ticket.id)}" ${selected ? 'checked' : ''} ${eligibleAttr} /></td>
+      <td class="mono small">${escapeHtml(ticket.id)}</td>
+      <td><span class="cell-strong">${escapeHtml(ticket.name || '—')}</span></td>
+      <td class="ltr small muted" dir="ltr">${escapeHtml(ticket.email || '—')}</td>
+      <td class="small">${escapeHtml(ticket.seat || '—')}</td>
+      <td>${badge(ticket.approval, BADGES.approval)}</td>
+      <td>${badge(ticket.payment, BADGES.payment)}</td>
+      <td>${badge(ticket.passStatus, BADGES.pass)}${ticket.eligible ? '' : '<span class="ineligible-note">غير مؤهل</span>'}</td>
+      <td>
+        <div class="row-actions">
+          <button type="button" class="btn btn-ghost btn-sm" data-preview-id="${escapeHtml(ticket.id)}" ${eligibleAttr}>معاينة</button>
+          <button type="button" class="btn btn-primary btn-sm" data-send-id="${escapeHtml(ticket.id)}" ${eligibleAttr}>إرسال</button>
         </div>
       </td>
     </tr>`;
@@ -371,24 +381,26 @@ function renderTickets() {
 
   el.ticketCards.innerHTML = tickets.map((ticket) => {
     const selected = state.selected.has(ticket.id);
-    return `<div class="tkt-mobile-card rounded-2xl border border-ink/10 bg-white/70 p-3" data-selected="${selected ? 'true' : 'false'}">
-      <div class="flex items-start justify-between gap-2">
-        <label class="flex items-center gap-2 min-w-0">
-          <input type="checkbox" class="h-4 w-4 accent-[#161411]" data-select-id="${escapeHtml(ticket.id)}" ${selected ? 'checked' : ''} ${ticket.eligible ? '' : 'disabled'} />
-          <span class="font-display text-[11px] ltr truncate">${escapeHtml(ticket.id)}</span>
+    const eligibleAttr = ticket.eligible ? '' : 'disabled';
+    return `<div class="ticket-card" data-selected="${selected ? 'true' : 'false'}">
+      <div class="ticket-card__head">
+        <label class="ticket-card__id">
+          <input type="checkbox" class="checkbox" data-select-id="${escapeHtml(ticket.id)}" ${selected ? 'checked' : ''} ${eligibleAttr} />
+          <span>${escapeHtml(ticket.id)}</span>
         </label>
         ${badge(ticket.passStatus, BADGES.pass)}
       </div>
-      <p class="font-semibold text-sm mt-2 truncate">${escapeHtml(ticket.name || '—')}</p>
-      <p class="text-[11px] text-ink/55 ltr truncate" dir="ltr">${escapeHtml(ticket.email || '—')}</p>
-      <div class="flex flex-wrap items-center gap-2 mt-2 text-[10px] text-ink/55">
+      <p class="ticket-card__name">${escapeHtml(ticket.name || '—')}</p>
+      <p class="ticket-card__email ltr" dir="ltr">${escapeHtml(ticket.email || '—')}</p>
+      <div class="ticket-card__meta">
         <span>المقعد: ${escapeHtml(ticket.seat || '—')}</span>
         ${badge(ticket.approval, BADGES.approval)}
         ${badge(ticket.payment, BADGES.payment)}
+        ${ticket.eligible ? '' : '<span class="ineligible-note">غير مؤهل</span>'}
       </div>
-      <div class="flex gap-2 mt-3">
-        <button type="button" class="tkt-btn tkt-btn-ghost flex-1 py-1.5 text-[10px]" data-preview-id="${escapeHtml(ticket.id)}" ${ticket.eligible ? '' : 'disabled'}>معاينة</button>
-        <button type="button" class="tkt-btn tkt-btn-ink flex-1 py-1.5 text-[10px]" data-send-id="${escapeHtml(ticket.id)}" ${ticket.eligible ? '' : 'disabled'}>إرسال</button>
+      <div class="ticket-card__actions">
+        <button type="button" class="btn btn-ghost btn-sm" data-preview-id="${escapeHtml(ticket.id)}" ${eligibleAttr}>معاينة</button>
+        <button type="button" class="btn btn-primary btn-sm" data-send-id="${escapeHtml(ticket.id)}" ${eligibleAttr}>إرسال</button>
       </div>
     </div>`;
   }).join('');
@@ -406,7 +418,6 @@ function renderDesignForm() {
   if (document.activeElement !== el.designQuote) el.designQuote.value = design.quote || '';
   el.themeSwatches.querySelectorAll('.theme-swatch').forEach((button) => {
     const active = button.dataset.theme === design.theme;
-    button.className = `theme-swatch rounded-xl border-2 px-3 py-2 text-[10px] font-semibold ${active ? 'border-gold bg-gold/15' : 'border-ink/10 bg-white/60'}`;
     button.setAttribute('aria-pressed', active ? 'true' : 'false');
   });
 }
@@ -514,7 +525,8 @@ async function boot() {
   }
 }
 
-async function login() {
+async function login(event) {
+  event?.preventDefault?.();
   const password = el.passwordInput.value;
   await fetchJson('/api/admin/auth', { method: 'POST', body: { password } });
   el.passwordInput.value = '';
@@ -655,8 +667,8 @@ delegateAction(document, '[data-send-id]', (_event, button) => sendTickets([butt
 
 el.themeSwatches.innerHTML = Object.keys(THEME_LABELS).map((theme) => {
   const colors = THEME_COLORS[theme];
-  return `<button type="button" class="theme-swatch rounded-xl border-2 border-ink/10 bg-white/60 px-3 py-2 text-[10px] font-semibold" data-theme="${escapeHtml(theme)}">
-            <span class="block h-4 w-4 rounded-full mx-auto mb-1" style="background:linear-gradient(135deg,${colors[0]},${colors[1]})"></span>
+  return `<button type="button" class="theme-swatch" data-theme="${escapeHtml(theme)}" aria-pressed="false">
+            <span class="swatch-dot" style="background:linear-gradient(135deg,${colors[0]},${colors[1]})"></span>
             ${escapeHtml(THEME_LABELS[theme])}
           </button>`;
 }).join('');

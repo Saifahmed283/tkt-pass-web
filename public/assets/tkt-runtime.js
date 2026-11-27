@@ -222,7 +222,7 @@ export function setElementStatus(element, text, kind = 'info', ttl = 0) {
 export function toast(host, message, kind = 'ok', ttl = 4200) {
   if (!host) return;
   const node = document.createElement('div');
-  node.className = `tkt-toast toast rounded-xl border px-4 py-2 text-xs shadow-lg tkt-toast-${kind}`;
+  node.className = `tkt-toast tkt-toast-${kind}`;
   node.textContent = message;
   node.setAttribute('role', kind === 'error' ? 'alert' : 'status');
   host.appendChild(node);
