@@ -156,23 +156,18 @@ function designFromApi(data) {
   const theme = THEMES[design.theme] ? design.theme : 'classic-black';
   return {
     theme,
-    custom: design.header && design.accent
-      ? {
-          header: normalizeHex(design.header, THEMES[theme].header),
-          accent: normalizeHex(design.accent, THEMES[theme].accent),
-        }
-      : null,
+    custom: null,
     quote: design.quote || '',
     graphic: ['none', 'topographic', 'contours', 'grid', 'orbit', 'diagonal'].includes(design.graphic) ? design.graphic : 'none',
   };
 }
 
 function currentDesign() {
-  const { theme, custom } = store.get().design;
+  const { theme } = store.get().design;
   return {
     theme,
-    header: custom ? custom.header : null,
-    accent: custom ? custom.accent : null,
+    header: null,
+    accent: null,
     quote: '',
     graphic: 'none',
   };
